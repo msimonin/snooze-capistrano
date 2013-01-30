@@ -1,0 +1,38 @@
+# MANAGED BY PUPPET
+# Module:: kadeployg5k::client
+---
+default: rennes
+servers:
+- name: luxembourg
+  port: 25300
+  hostname: kadeploy-server.luxembourg.grid5000.fr
+- name: bordeaux
+  port: 25300
+  hostname: kadeploy-server.bordeaux.grid5000.fr
+- name: grenoble
+  port: 25300
+  hostname: kadeploy-server.grenoble.grid5000.fr
+- name: lille
+  port: 25300
+  hostname: kadeploy-server.lille.grid5000.fr
+- name: lyon
+  port: 25300
+  hostname: kadeploy-server.lyon.grid5000.fr
+- name: nancy
+  port: 25300
+  hostname: kadeploy-server.nancy.grid5000.fr
+- name: rennes
+  port: 25300
+  hostname: kadeploy-server.rennes.grid5000.fr
+- name: sophia
+  port: 25300
+  hostname: kadeploy-server.sophia.grid5000.fr
+- name: toulouse
+  port: 25300
+  hostname: kadeploy-server.toulouse.grid5000.fr
+- name: reims
+  port: 25300
+  hostname: kadeploy-server.reims.grid5000.fr
+- name: qualif
+  port: 25300
+  hostname: kadeploy-server.qualif.grid5000.fr

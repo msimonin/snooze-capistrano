@@ -1,0 +1,39 @@
+include "libvirt"
+include "zookeeper"
+include "java"
+
+
+$groupManagerHeartbeatPort = 1000+$idfromhost
+
+class { 
+  'snoozenode':
+    type                      => "<%= @nodeType %>",
+    controlDataPort           => 5000,
+    listenAddress             => $ipaddress,
+    multicastAddress          => "225.4.5.6",
+    groupManagerHeartbeatPort => $groupManagerHeartbeatPort,
+		zookeeperHosts            => ["<%= @zookeeperHosts %>"],
+		virtualMachineSubnet      => ["<%= @virtualMachineSubnet %>"],
+}
+
+
+<% if @nodeType == "bootstrap" %>
+<%=
+"class { 
+	    'zookeeper::zookeeperd': 
+       zookeeperHosts            => [\"" + @zookeeperdHosts + "\"],
+  }"
+%>
+<%  end %>
+
+stage {
+  'first':
+}
+
+class {
+  'apt':
+  stage => first
+}
+
+Stage['first'] -> Stage['main']
+
