@@ -1,7 +1,7 @@
 class snoozenode($type                      = "bootstrap",
                  $controlDataPort           = 5000,
-	         $listenAddress		    = "localhost",
-		 $multicastAddress	    = "225.4.5.6",
+                 $listenAddress		    = "localhost",
+                 $multicastAddress	    = "225.4.5.6",
                  $groupManagerHeartbeatPort = 9000, 
                  $zookeeperHosts            ="localhost",
                  $virtualMachineSubnet      ="192.168.122.0/24") {
@@ -9,19 +9,19 @@ class snoozenode($type                      = "bootstrap",
 
 	user { 'snoozeadmin':
 		ensure => "present",
-                uid    => 32000,
+    uid    => 32000,
 		groups  => ["snooze", "libvirt"],
 		require => [Group["snooze"],Group["libvirt"]]
   }
 
   group { 'snooze':
 	  ensure     => "present",
-          gid        => 32001 
+    gid        => 32001 
 	}
 
 	group { 'libvirt':
 	  ensure    => "present",
-   	  require 	=> Package["libvirt-bin"]
+    require 	=> Package["libvirt-bin"]
 	}
 
 	file { 'snoozeadmin-sudoers':
@@ -43,8 +43,8 @@ class snoozenode($type                      = "bootstrap",
 	  owner   => root,
 	  group   => root,
 	  mode    => 644,
-	  source  => "puppet:///modules/snoozenode/snoozenode_1.1.0-0_all.deb",
-	  require => File['/opt/snoozenode'],
+	  source  => "puppet:///modules/snoozenode/snoozenode.deb",
+    require => File['/opt/snoozenode'],
 	}
 
 	package { 'snoozenode':
