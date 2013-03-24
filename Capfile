@@ -2,7 +2,10 @@ require 'xp5k'
 require 'erb'
 
 set :g5k_user, "msimonin"
-ssh_options[:keys]= [File.join(ENV["HOME"], ".ssh_cap", "id_rsa"), File.join(ENV["HOME"], ".ssh", "id_rsa")]
+set :snooze_capistrano_repo_url, "https://github.com/msimonin/snooze-capistrano.git"
+set :snoozenode_deb_url, "https://ci.inria.fr/snooze-software/job/master-snoozenode/ws/distributions/deb-package/snoozenode_1.1.0-0_all.deb"
+set :snoozeclient_deb_url, "https://ci.inria.fr/snooze-software/job/master-snoozeclient/ws/distributions/deb-package/snoozeclient_1.1.0-0_all.deb"
+ssh_options[:keys]= [File.join(ENV["HOME"], ".ssh_cap", "id_rsa_cap"), File.join(ENV["HOME"], ".ssh", "id_rsa")]
 set :gateway, "#{g5k_user}@access.grid5000.fr"
 
 
@@ -43,7 +46,7 @@ myxp.define_job({
 
 myxp.define_deployment({
   :site           => XP5K::Config[:site] || 'rennes',
-  :environment    => "squeeze-x64-nfs",
+  :environment    => "wheezy-x64-nfs",
   :jobs           => %w{bootstrap groupmanager localcontroller},
   :key            => File.read(XP5K::Config[:public_key])
 })
@@ -69,8 +72,9 @@ role :frontend do
 end
 
 
-after "automatic","submit","deploy", "puppet", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
-after "redeploy", "deploy", "puppet", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
+after "automatic","submit","deploy", "prepare", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
+after "redeploy", "deploy", "prepare", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
+
 
 
 desc 'automatic deploiement'
@@ -124,12 +128,36 @@ task :tunnel_bs, :roles=>[:bootstrap]  do
   print "###### First bootstrap ##### \n"
 end
 
-desc 'Install puppet on hosts' 
-task :puppet, :roles=>[:groupmanager, :bootstrap, :localcontroller] do
-  set :user, 'root'
-  run "apt-get update" 
-  run "apt-get install -y puppet"
+namespace :prepare do
+  
+  desc 'prepare the nodes'
+  task :default do
+    prepare
+    puppet
+  end
+  desc 'Install puppet on hosts' 
+  task :puppet, :roles=>[:groupmanager, :bootstrap, :localcontroller] do
+    set :user, 'root'
+    run "apt-get update" 
+    run "apt-get install -y puppet"
 end
+
+  desc 'prepare environment'
+  task :prepare, :roles => [:frontend] do
+    set :user, "#{g5k_user}"
+    puts "####### Downloading snooze-capistrano #####"
+    ls = capture('ls snooze-capistrano &2>&1')
+    puts ls
+    if ls!=""
+      run "mv snooze-capistrano snooze-capistrano"+Time.now.to_i.to_s 
+    end
+    run "https_proxy='http://proxy:3128' git clone  #{snooze_capistrano_repo_url}"
+    run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
+    run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozeclient.deb &2>&1"
+  end
+
+end
+
 
 namespace :bootstrap do
   
@@ -153,13 +181,13 @@ namespace :bootstrap do
     myFile = File.open("puppet/manifests/bootstrap.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/bootstrap.pp","/home/#{g5k_user}/Capistrano/puppet/manifests/bootstrap.pp")
+    upload("puppet/manifests/bootstrap.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp")
   end
 
   desc 'provision the bootstrap'
   task :provision , :roles => [:bootstrap] do
     set :user, 'root'
-    run "puppet apply /home/#{g5k_user}/Capistrano/puppet/manifests/bootstrap.pp --modulepath=/home/#{g5k_user}/Capistrano/puppet/modules/"
+    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
   end
 
 end # namespace bootstrap
@@ -186,14 +214,14 @@ namespace :groupmanager do
     myFile = File.open("puppet/manifests/groupmanager.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/groupmanager.pp","/home/#{g5k_user}/Capistrano/puppet/manifests/groupmanager.pp")
+    upload("puppet/manifests/groupmanager.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp")
   end
 
 
   desc 'provision the groupmanagers'
   task :provision, :roles => [:groupmanager] do
     set :user, 'root'
-    run "puppet apply /home/#{g5k_user}/Capistrano/puppet/manifests/groupmanager.pp --modulepath=/home/#{g5k_user}/Capistrano/puppet/modules/"
+    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
   end	
 
 end # namespace groupmanager
@@ -223,19 +251,19 @@ namespace :localcontroller do
     myFile = File.open("puppet/manifests/localcontroller.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/localcontroller.pp","/home/#{g5k_user}/Capistrano/puppet/manifests/localcontroller.pp")
+    upload("puppet/manifests/localcontroller.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp")
   end
 
   desc 'provision the local controllers'
   task :provision, :roles => [:localcontroller] do
     set :user, 'root'
-    run "puppet apply /home/#{g5k_user}/Capistrano/puppet/manifests/localcontroller.pp --modulepath=/home/#{g5k_user}/Capistrano/puppet/modules/"
+    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
   end	
 
   desc 'Set up a bridge on hosts'
   task :bridge_network, :roles => [:localcontroller] do
-    run "cp /home/#{g5k_user}/Capistrano/network/interfaces /etc/network/interfaces"
-    run "/home/#{g5k_user}/Capistrano/network/configure_network.sh"
+    run "cp /home/#{g5k_user}/snooze-capistrano/network/interfaces /etc/network/interfaces"
+    run "/home/#{g5k_user}/snooze-capistrano/network/configure_network.sh"
   end
 
 end # namespace localcontroller    	
@@ -252,7 +280,7 @@ namespace :nfs do
   desc 'Configure the nfs server'
   task :server, :roles => [:nfs_server] do
   set :user, "root"
-    run "puppet apply /home/#{g5k_user}/Capistrano/puppet/manifests/nfs-server.pp --modulepath=/home/#{g5k_user}/Capistrano/puppet/modules/"
+    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-server.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
   end
 
   desc 'Configure the nfs clients (localcontroller)' 
@@ -265,17 +293,16 @@ namespace :nfs do
     myFile = File.open("puppet/manifests/nfs-client.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/nfs-client.pp","/home/#{g5k_user}/Capistrano/puppet/manifests/nfs-client.pp")
+    upload("puppet/manifests/nfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp")
   end
 
   desc 'Provision the nfs client' 
   task :provision_client, :roles => [:localcontroller] do
   set :user, "root"
-  run "puppet apply /home/#{g5k_user}/Capistrano/puppet/manifests/nfs-client.pp --modulepath=/home/#{g5k_user}/Capistrano/puppet/modules/"
+  run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
   end
 
 end # namespace nfs
-
 
 namespace :cluster do
   desc 'Start cluster'
