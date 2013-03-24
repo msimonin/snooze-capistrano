@@ -1,7 +1,6 @@
-include "libvirt"
-include "zookeeper"
-include "java"
-
+ include "libvirt"
+ include "zookeeper"
+ include "java"
 
 $groupManagerHeartbeatPort = 1000+$idfromhost
 
@@ -19,10 +18,17 @@ class {
 
 <% if @nodeType == "bootstrap" %>
 <%=
-"class { 
+  "
+  class { 
 	    'zookeeper::zookeeperd': 
        zookeeperHosts            => [\"" + @zookeeperdHosts + "\"],
-  }"
+  }
+
+  class { 
+	    'snoozenode::nfs': 
+  }
+
+"
 %>
 <%  end %>
 
