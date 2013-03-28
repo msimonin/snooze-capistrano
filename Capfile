@@ -1,13 +1,6 @@
 require 'xp5k'
 require 'erb'
-
-set :g5k_user, "msimonin"
-set :snooze_capistrano_repo_url, "https://github.com/msimonin/snooze-capistrano.git"
-set :snoozenode_deb_url, "https://ci.inria.fr/snooze-software/job/master-snoozenode/ws/distributions/deb-package/snoozenode_1.1.0-0_all.deb"
-set :snoozeclient_deb_url, "https://ci.inria.fr/snooze-software/job/master-snoozeclient/ws/distributions/deb-package/snoozeclient_1.1.0-0_all.deb"
-ssh_options[:keys]= [File.join(ENV["HOME"], ".ssh_cap", "id_rsa_cap"), File.join(ENV["HOME"], ".ssh", "id_rsa")]
-set :gateway, "#{g5k_user}@access.grid5000.fr"
-
+load 'config/deploy.rb' 
 
 XP5K::Config.load
 
