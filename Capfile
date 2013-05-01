@@ -69,8 +69,8 @@ role :frontend do
 end
 
 
-after "automatic","submit","deploy", "prepare", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
-after "redeploy", "deploy", "prepare", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
+after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
+after "redeploy", "deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
 
 
 
@@ -173,6 +173,7 @@ namespace :bootstrap do
     @zookeeperHosts       = myxp.job_with_name('bootstrap')['assigned_nodes'].first
     @zookeeperdHosts      = myxp.job_with_name('bootstrap')['assigned_nodes'].first
     @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
+    @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
@@ -208,6 +209,7 @@ namespace :groupmanager do
     @zookeeperHosts = myxp.job_with_name('bootstrap')['assigned_nodes'].first
     @zookeeperdHosts = myxp.job_with_name('bootstrap')['assigned_nodes'].first
     @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
+    @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     generate = renderer.result(binding)
     myFile = File.open("puppet/manifests/groupmanager.pp", "w")
@@ -245,6 +247,7 @@ namespace :localcontroller do
     @zookeeperHosts = myxp.job_with_name('bootstrap')['assigned_nodes'].first
     @zookeeperdHosts = myxp.job_with_name('bootstrap')['assigned_nodes'].first
     @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
+    @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     generate = renderer.result(binding)
     myFile = File.open("puppet/manifests/localcontroller.pp", "w")

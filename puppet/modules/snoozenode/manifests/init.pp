@@ -1,10 +1,11 @@
 class snoozenode($type                      = "bootstrap",
                  $controlDataPort           = 5000,
-                 $listenAddress		    = "localhost",
-                 $multicastAddress	    = "225.4.5.6",
+                 $listenAddress		          = "localhost",
+                 $multicastAddress	        = "225.4.5.6",
                  $groupManagerHeartbeatPort = 9000, 
                  $zookeeperHosts            ="localhost",
-                 $virtualMachineSubnet      ="192.168.122.0/24") {
+                 $virtualMachineSubnet      ="192.168.122.0/24"
+                 $externalNotificationHost  ="localhost") {
   
 
 	user { 'snoozeadmin':

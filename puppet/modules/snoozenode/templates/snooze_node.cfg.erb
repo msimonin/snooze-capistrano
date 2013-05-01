@@ -85,6 +85,17 @@ monitoring.thresholds.cpu = 0, 1, 1
 monitoring.thresholds.memory = 0, 1, 1
 monitoring.thresholds.network = 0, 1, 1
 
+# External monitoring
+monitoring.external.transport = RABBITMQ
+monitoring.external.address = <%= @externalNotificationHost %>
+monitoring.external.port = 5672
+monitoring.external.username = snooze
+monitoring.external.password = snooze
+monitoring.external.vhost = snooze-vhost
+monitoring.external.faultTolerance.numberOfRetries = 10
+monitoring.external.faultTolerance.retryInterval = 10
+
+
 ################## Estimator ##################
 # Enables/disables static estimation (i.e. based on requested capacity only)
 estimator.static = true
