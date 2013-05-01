@@ -36,10 +36,11 @@ stage {
   'first':
 }
 
+=begin
 class {
   'apt':
   stage => first
 }
 
 Stage['first'] -> Stage['main']
-
+=end
