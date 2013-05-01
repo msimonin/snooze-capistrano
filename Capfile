@@ -343,7 +343,7 @@ namespace :cluster do
   desc 'Copy base image'
   task :copy, :roles=>[:nfs_server] do
     set :user, "root"
-    run "cd /tmp/snooze/images ; wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 &2 > &1"
+    run "cd /tmp/snooze/images ; wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 &2>&1"
   end
 
   desc 'Start VMs'
