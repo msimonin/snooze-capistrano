@@ -337,6 +337,6 @@ namespace :cluster do
   task :prepare, :roles=>[:nfs_server] do
     set :user, "root"
     run "https_proxy='http://proxy:3128' git clone  #{snooze_experiments_repo_url} /tmp/snoozedeploy" 
-    run "cp /tmp/snoozedeploy/grid5000/experiments /tmp/snooze"
+    run "cp -r /tmp/snoozedeploy/grid5000/experiments /tmp/snooze"
   end
 end
