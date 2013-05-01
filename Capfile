@@ -2,12 +2,13 @@ require 'xp5k'
 require 'erb'
 load 'config/deploy.rb' 
 
+
 XP5K::Config.load
 
 myxp = XP5K::XP.new(:logger => logger)
 
 myxp.define_job({
-  :resources  => "nodes=1,walltime=1:00",
+  :resources  => "nodes=#{nb_bootstraps}, walltime=#{walltime}",
   :site       => XP5K::Config[:site] || 'rennes',
   :types      => ["deploy"],
   :name       => "bootstrap",
@@ -15,7 +16,7 @@ myxp.define_job({
 })
 
 myxp.define_job({
-  :resources  => "nodes=2,walltime=1:00",
+  :resources  => "nodes=#{nb_groupmanagers}, walltime=#{walltime}",
   :site       => XP5K::Config[:site] || 'rennes',
   :types      => ["deploy"],
   :name       => "groupmanager",
@@ -23,7 +24,7 @@ myxp.define_job({
 })
 
 myxp.define_job({
-  :resources  => "nodes=1, walltime=1:00",
+  :resources  => "nodes=#{nb_localcontrollers}, walltime=#{walltime}",
   :site       => XP5K::Config[:site] || 'rennes',
   :types      => ["deploy"],
   :name       => "localcontroller",
@@ -31,7 +32,7 @@ myxp.define_job({
 })
 
 myxp.define_job({
-  :resources  => "slash_22=1,walltime=1:00",
+  :resources  => "#{subnet}=1, walltime=#{walltime}",
   :site       => XP5K::Config[:site] || 'rennes',
   :name       => "subnet",
   :command    => "sleep 86400"
@@ -332,4 +333,10 @@ namespace :cluster do
     run "/etc/init.d/snoozenode stop" 
   end
 
+  desc 'Copy experiments and base image file'
+  task :prepare, :roles=>[:nfs_server] do
+    set :user, "root"
+    run "https_proxy='http://proxy:3128' git clone  #{snooze_experiments_repo_url} /tmp/snoozedeploy" 
+    run "cp /tmp/snoozedeploy/grid5000/experiments /tmp/snooze"
+  end
 end
