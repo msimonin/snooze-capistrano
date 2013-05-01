@@ -145,6 +145,7 @@ end
       run "mv snooze-capistrano snooze-capistrano"+Time.now.to_i.to_s 
     end
     run "https_proxy='http://proxy:3128' git clone  #{snooze_capistrano_repo_url}"
+    run "git checkout  #{snooze_capistrano_branch}"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozeclient.deb &2>&1"
   end
