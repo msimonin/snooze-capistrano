@@ -70,8 +70,8 @@ role :frontend do
 end
 
 
-after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
-after "redeploy", "deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:start"
+after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs","cluster:prepare", "cluster:start"
+after "redeploy", "deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:prepare", "cluster:start"
 
 
 
@@ -153,7 +153,7 @@ end
     run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git submodule init"
     run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git submodule update"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
-    run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozeclient.deb &2>&1"
+    run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O snooze-capistrano/puppet/modules/snoozeclient/files/snoozeclient.deb &2>&1"
   end
 
 end
@@ -338,5 +338,18 @@ namespace :cluster do
     set :user, "root"
     run "https_proxy='http://proxy:3128' git clone  #{snooze_experiments_repo_url} /tmp/snoozedeploy" 
     run "cp -r /tmp/snoozedeploy/grid5000/experiments /tmp/snooze"
+  end
+  
+  desc 'Copy base image'
+  task :copy, :roles=>[:nfs_server] do
+    set :user, "root"
+    run "cd /tmp/snooze/images ; wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 &2 > &1"
+  end
+
+  desc 'Start VMs'
+  task :vms, :roles=>[:nfs_server] do
+    set :user, "root"
+    run "cd /tmp/snooze/experiments ; ./experiments.sh -c "+ ENV['vcn']+ " "+ENV['vms']
+    run "snoozeclient start -vcn " + ENV['vcn']
   end
 end
