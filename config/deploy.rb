@@ -1,6 +1,6 @@
 require 'capistrano/ext/multistage'
 
-set :stages, %w(master maint1.0.0 future)
+set :stages, %w(master maint1.0.0 testing)
 set :default_stage, "master"
 
 set :g5k_user, "msimonin"
