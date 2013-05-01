@@ -7,7 +7,7 @@ XP5K::Config.load
 myxp = XP5K::XP.new(:logger => logger)
 
 myxp.define_job({
-  :resources  => "nodes=1,walltime=3:00",
+  :resources  => "nodes=1,walltime=1:00",
   :site       => XP5K::Config[:site] || 'rennes',
   :types      => ["deploy"],
   :name       => "bootstrap",
@@ -15,7 +15,7 @@ myxp.define_job({
 })
 
 myxp.define_job({
-  :resources  => "nodes=2,walltime=3:00",
+  :resources  => "nodes=2,walltime=1:00",
   :site       => XP5K::Config[:site] || 'rennes',
   :types      => ["deploy"],
   :name       => "groupmanager",
@@ -23,7 +23,7 @@ myxp.define_job({
 })
 
 myxp.define_job({
-  :resources  => "nodes=2, walltime=3:00",
+  :resources  => "nodes=1, walltime=1:00",
   :site       => XP5K::Config[:site] || 'rennes',
   :types      => ["deploy"],
   :name       => "localcontroller",
@@ -31,7 +31,7 @@ myxp.define_job({
 })
 
 myxp.define_job({
-  :resources  => "slash_22=1,walltime=3:00",
+  :resources  => "slash_22=1,walltime=1:00",
   :site       => XP5K::Config[:site] || 'rennes',
   :name       => "subnet",
   :command    => "sleep 86400"
@@ -49,6 +49,10 @@ role :bootstrap do
 end
 
 role :nfs_server do
+  myxp.job_with_name('bootstrap')['assigned_nodes'].first
+end
+
+role :rabbitmq_server do
   myxp.job_with_name('bootstrap')['assigned_nodes'].first
 end
 
@@ -145,7 +149,8 @@ end
       run "mv snooze-capistrano snooze-capistrano"+Time.now.to_i.to_s 
     end
     run "https_proxy='http://proxy:3128' git clone  #{snooze_capistrano_repo_url}"
-    run "cd snooze-capistrano ; git checkout  #{snooze_capistrano_branch}"
+    run "https_proxy='http://proxy:3128' git submodule init"
+    run "https_proxy='http://proxy:3128' git submodule update"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozeclient.deb &2>&1"
   end
@@ -261,6 +266,19 @@ namespace :localcontroller do
   end
 
 end # namespace localcontroller    	
+
+namespace :rabbit do
+  desc 'Configure the rabbitmq server'
+  task :default do
+    server
+  end
+
+  desc 'Install Configure the rabbitmq server'
+  task :server, :roles => [:rabbitmq_server] do
+  set :user, "root"
+    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/rabbitmq-server.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
+  end
+end
 
 namespace :nfs do
 
