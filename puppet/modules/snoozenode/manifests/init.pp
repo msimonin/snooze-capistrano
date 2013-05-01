@@ -4,7 +4,7 @@ class snoozenode($type                      = "bootstrap",
                  $multicastAddress	        = "225.4.5.6",
                  $groupManagerHeartbeatPort = 9000, 
                  $zookeeperHosts            ="localhost",
-                 $virtualMachineSubnet      ="192.168.122.0/24"
+                 $virtualMachineSubnet      ="192.168.122.0/24",
                  $externalNotificationHost  ="localhost") {
   
 
