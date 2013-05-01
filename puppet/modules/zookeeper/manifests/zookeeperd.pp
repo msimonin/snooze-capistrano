@@ -2,7 +2,6 @@ class zookeeper::zookeeperd ($zookeeperHosts=['localhost']){
 
   package { 'zookeeperd':
 	  ensure 		=> installed,
-		require   => Exec["apt-get_update"]
 	}
 
 	service { 'zookeeper':
