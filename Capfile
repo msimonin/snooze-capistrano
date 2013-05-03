@@ -338,6 +338,7 @@ namespace :cluster do
     set :user, "root"
     run "https_proxy='http://proxy:3128' git clone  #{snooze_experiments_repo_url} /tmp/snoozedeploy" 
     run "cp -r /tmp/snoozedeploy/grid5000/experiments /tmp/snooze"
+    run "genisoimage -RJ -o /tmp/snooze/images/context.iso /home/#{g5k_user}/snooze-capistrano/network/context"
   end
   
   desc 'Copy base image'
