@@ -365,7 +365,7 @@ namespace :cluster do
     myFile = File.open("network/context/common/network", "w")
     myFile.write(generate)
     myFile.close
-    upload("network/context/common/network","/home/#{g5k_user}/snooze-capistrano/network/context/common/")
+    upload("network/context/common/network","/home/#{g5k_user}/snooze-capistrano/network/context/common/network")
   end
 
   desc 'Start VMs'
