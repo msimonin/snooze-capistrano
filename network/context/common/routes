@@ -1,0 +1,2 @@
+#p route add -net <<vlan-net>> netmask <<vlan-netmask>> dev eth0
+#up route del default

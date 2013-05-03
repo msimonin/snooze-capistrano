@@ -346,6 +346,27 @@ namespace :cluster do
     run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
   end
 
+  desc 'Network contextualization generation'
+  task :network, :roles=>[:frontend] do
+    set :user, "#{g5k_user}"
+    template = File.read("templates/network.erb")
+    renderer = ERB.new(template)
+    subnet_id = myxp.job_with_name('subnet')['uid'].to_s
+    puts subnet_id
+    @gateway=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
+    @network=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $5}'")
+    @broadcast=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $2}'")
+    @netmask=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $3}'")
+    @nameserver=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
+    template = File.read("templates/network.erb")
+    renderer = ERB.new(template)
+    generate = renderer.result(binding)
+    myFile = File.open("network/context/common/network", "w")
+    myFile.write(generate)
+    myFile.close
+    upload("network/context/common/network","/home/#{g5k_user}/snooze-capistrano/network/context/common/")
+  end
+
   desc 'Start VMs'
   task :vms, :roles=>[:nfs_server] do
     set :user, "root"
