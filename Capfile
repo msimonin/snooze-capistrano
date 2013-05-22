@@ -17,7 +17,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( toulouse rennes) ,
+  :sites      => %w( toulouse ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
@@ -25,7 +25,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( toulouse rennes ),
+  :sites       => %w( toulouse ),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
@@ -162,7 +162,7 @@ end
       run "mv snooze-capistrano snooze-capistrano"+Time.now.to_i.to_s 
     end
     run "https_proxy='http://proxy:3128' git clone  #{snooze_capistrano_repo_url}"
-    run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url}" puppet
+    run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} puppet" 
     #run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git submodule init"
     #run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git submodule update"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
@@ -192,10 +192,10 @@ namespace :bootstrap do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     generate = renderer.result(binding)
-    myFile = File.open("puppet/manifests/bootstrap.pp", "w")
+    myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/bootstrap.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp")
+    upload("tmp/bootstrap.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp")
   end
 
   desc 'provision the bootstrap'
@@ -226,10 +226,10 @@ namespace :groupmanager do
     @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     generate = renderer.result(binding)
-    myFile = File.open("puppet/manifests/groupmanager.pp", "w")
+    myFile = File.open("tmp/groupmanager.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/groupmanager.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp")
+    upload("tmp/groupmanager.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp")
   end
 
 
@@ -264,10 +264,10 @@ namespace :localcontroller do
     @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     generate = renderer.result(binding)
-    myFile = File.open("puppet/manifests/localcontroller.pp", "w")
+    myFile = File.open("tmp/localcontroller.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/localcontroller.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp")
+    upload("tmp/localcontroller.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp")
   end
 
   desc 'provision the local controllers'
