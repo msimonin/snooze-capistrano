@@ -9,7 +9,7 @@ myxp = XP5K::XPM.new(:logger => logger)
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_bootstraps}, walltime=#{walltime}"],
-  :sites      => %w( toulouse ),
+  :sites      => %w( nancy ),
   :types      => ["deploy"],
   :name       => "bootstrap",
   :command    => "sleep 86400"
@@ -17,7 +17,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( toulouse ) ,
+  :sites      => %w( nancy sophia ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
@@ -25,7 +25,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( toulouse ),
+  :sites       => %w( nancy sophia ),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
@@ -33,14 +33,14 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],
-  :sites       => %w( toulouse ),
+  :sites       => %w( sophia ),
   :name       => "subnet",
   :command    => "sleep 86400"
 })
 
 myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
-  :sites       => %w( toulouse ),
+  :sites       => %w( sophia ),
   :name       => "vlan",
   :command    => "sleep 86400"
 })
@@ -53,39 +53,31 @@ myxp.define_deployment({
 })
 
 role :bootstrap do
-  #myxp.job_with_name('bootstrap')['assigned_nodes']
-  myxp.get_assigned_nodes('bootstrap', kavlan=17).first
+  myxp.get_assigned_nodes('bootstrap', kavlan="#{kavlan}").first
 end
 
 role :nfs_server do
-  myxp.get_assigned_nodes('bootstrap', kavlan=17).first
-  #myxp.job_with_name('bootstrap')['assigned_nodes'].first
+  myxp.get_assigned_nodes('bootstrap', kavlan="#{kavlan}").first
 end
 
 role :rabbitmq_server do
-  myxp.get_assigned_nodes('bootstrap', kavlan=17).first
-  #myxp.job_with_name('bootstrap')['assigned_nodes'].first
+  myxp.get_assigned_nodes('bootstrap', kavlan="#{kavlan}").first
 end
 
 role :groupmanager do
-  myxp.get_assigned_nodes('groupmanager', kavlan=17)
-  #myxp.job_with_name('groupmanager')['assigned_nodes']
+  myxp.get_assigned_nodes('groupmanager', kavlan="#{kavlan}").first
 end
 
 role :localcontroller do
-  myxp.get_assigned_nodes('localcontroller', kavlan=17)
-  #myxp.job_with_name('localcontroller')['assigned_nodes']
+  myxp.get_assigned_nodes('localcontroller', kavlan="#{kavlan}").first
 end
 
 role :frontend do
-  %w( toulouse rennes )
+  %w( rennes )
 end
-
 
 after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs","cluster:prepare", "cluster:start"
 after "redeploy", "deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:prepare", "cluster:start"
-
-
 
 desc 'automatic deploiement'
 task :automatic do
@@ -163,8 +155,8 @@ end
     end
     run "https_proxy='http://proxy:3128' git clone  #{snooze_capistrano_repo_url}"
     run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} puppet" 
-    #run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git submodule init"
-    #run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git submodule update"
+    run "cd snooze-capistrano/puppet ; https_proxy='http://proxy:3128' git submodule init"
+    run "cd snooze-capistrano/puppet ; https_proxy='http://proxy:3128' git submodule update"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
     run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O snooze-capistrano/puppet/modules/snoozeclient/files/snoozeclient.deb &2>&1"
   end
