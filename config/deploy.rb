@@ -17,5 +17,5 @@ set :nb_bootstraps, ENV['bootstraps'] || "1"
 set :nb_groupmanagers, ENV['groupmanagers'] || "2"
 set :nb_localcontrollers, ENV['localcontrollers'] || "2"
 set :subnet, ENV['subnet'] || "slash_22"
-set :kavlan, ENV['kavlan'] || "18"
+set :vlan, ENV['vlan'] || "18"
 
