@@ -9,7 +9,7 @@ myxp = XP5K::XPM.new(:logger => logger)
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_bootstraps}, walltime=#{walltime}"],
-  :sites      => %w( nancy ),
+  :sites      => %w( lyon ),
   :types      => ["deploy"],
   :name       => "bootstrap",
   :command    => "sleep 86400"
@@ -17,7 +17,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( nancy sophia ) ,
+  :sites      => %w( sophia lyon toulouse ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
@@ -25,7 +25,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( nancy sophia ),
+  :sites       => %w( sophia toulouse),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
@@ -40,7 +40,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
-  :sites       => %w( sophia ),
+  :sites       => %w( toulouse ),
   :name       => "vlan",
   :command    => "sleep 86400"
 })
@@ -69,11 +69,15 @@ role :groupmanager do
 end
 
 role :localcontroller do
-  myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+  myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
 end
 
 role :frontend do
-  %w( rennes )
+  %w( sophia lyon toulouse )
+end
+
+role :subnet do
+  %w( sophia )
 end
 
 after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs","cluster:prepare", "cluster:start"
@@ -163,17 +167,17 @@ end
 
 end
 
-
 namespace :bootstrap do
   
   desc 'deploy the bootstrap nodes'
   task :default do
     template
+    transfer
     provision
   end
   
   desc 'Generate bootstrap.pp template and deploy it on the frontend'
-  task :template, :roles => [:frontend] do
+  task :template, roles => [:subnet] do
     set :user, "#{g5k_user}"
     @nodeType             = "bootstrap"
     @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
@@ -187,6 +191,10 @@ namespace :bootstrap do
     myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
     myFile.close
+  end
+
+  task :transfer, :roles => [:frontend] do
+    set :user, "#{g5k_user}"
     upload("tmp/bootstrap.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp")
   end
 
@@ -203,11 +211,12 @@ namespace :groupmanager do
   desc 'Deploy the group manager nodes' 
   task :default do
     template
+    transfer
     provision
   end
 
   desc 'Generate groupmanager.pp template and deploy it on the frontend'
-  task :template, :roles => [:frontend] do
+  task :template, :roles => [:subnet] do
     set :user, "#{g5k_user}"
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
@@ -221,6 +230,9 @@ namespace :groupmanager do
     myFile = File.open("tmp/groupmanager.pp", "w")
     myFile.write(generate)
     myFile.close
+  end
+
+  task :transfer, :roles => [:frontend] do
     upload("tmp/groupmanager.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp")
   end
 
@@ -239,13 +251,14 @@ namespace :localcontroller do
   desc 'Deploy the local controller nodes'
   task :default do
     template
+    transfer
     provision
     bridge_network 
  end
  
   
   desc 'Generate localcontroller.pp template and deploy it on the frontend'
-  task :template, :roles => [:frontend] do
+  task :template, :roles => [:subnet] do
     set :user, "#{g5k_user}" 
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
@@ -259,6 +272,9 @@ namespace :localcontroller do
     myFile = File.open("tmp/localcontroller.pp", "w")
     myFile.write(generate)
     myFile.close
+  end
+
+  task :transfer, :roles => [:frontend] do
     upload("tmp/localcontroller.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp")
   end
 
@@ -349,7 +365,7 @@ namespace :cluster do
   desc 'Copy base image'
   task :copy, :roles=>[:nfs_server] do
     set :user, "root"
-    run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
+    run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget http://public.lyon.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
   end
 
   desc 'Network contextualization generation'
