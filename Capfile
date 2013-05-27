@@ -17,7 +17,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( sophia lyon toulouse ) ,
+  :sites      => %w( lyon ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
@@ -25,7 +25,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( sophia toulouse),
+  :sites       => %w( lyon),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
@@ -33,31 +33,31 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],
-  :sites       => %w( sophia ),
+  :sites       => %w( lyon ),
   :name       => "subnet",
   :command    => "sleep 86400"
 })
-
+=begin
 myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
-  :sites       => %w( toulouse ),
+  :sites       => %w( lyon ),
   :name       => "vlan",
   :command    => "sleep 86400"
 })
+=end
 myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
   :jobs           => %w{bootstrap groupmanager localcontroller},
   :key            => File.read("#{ssh_public}"), 
-  :vlan           => "#{vlan}"
+#  :vlan           => "#{vlan}"
 })
-#puts "kavlan = "+ kavlan.to_s
+
 role :bootstrap do
   myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :nfs_server do
   myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
-#  myxp.get_assigned_nodes('bootstrap', kavlan=kavlan).first
 end
 
 role :rabbitmq_server do
@@ -73,15 +73,14 @@ role :localcontroller do
 end
 
 role :frontend do
-  %w( sophia lyon toulouse )
+  %w( lyon )
 end
 
 role :subnet do
-  %w( sophia )
+  %w( lyon )
 end
 
-after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs","cluster:prepare", "cluster:start"
-after "redeploy", "deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs", "cluster:prepare", "cluster:start"
+after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs","cluster:prepare","cluster:copy","cluster:network","cluster:context", "cluster:start"
 
 desc 'automatic deploiement'
 task :automatic do
@@ -327,10 +326,10 @@ namespace :nfs do
     renderer = ERB.new(template)
     @nfshost =  myxp.job_with_name('bootstrap')['assigned_nodes'].first
     generate = renderer.result(binding)
-    myFile = File.open("puppet/manifests/nfs-client.pp", "w")
+    myFile = File.open("tmp/nfs-client.pp", "w")
     myFile.write(generate)
     myFile.close
-    upload("puppet/manifests/nfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp")
+    upload("tmp/nfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp")
   end
 
   desc 'Provision the nfs client' 
@@ -359,13 +358,12 @@ namespace :cluster do
     set :user, "root"
     run "https_proxy='http://proxy:3128' git clone  #{snooze_experiments_repo_url} /tmp/snoozedeploy" 
     run "cp -r /tmp/snoozedeploy/grid5000/experiments /tmp/snooze"
-    run "genisoimage -RJ -o /tmp/snooze/images/context.iso /home/#{g5k_user}/snooze-capistrano/network/context"
   end
-  
+
   desc 'Copy base image'
   task :copy, :roles=>[:nfs_server] do
     set :user, "root"
-    run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget http://public.lyon.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
+    run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
   end
 
   desc 'Network contextualization generation'
@@ -387,6 +385,11 @@ namespace :cluster do
     myFile.write(generate)
     myFile.close
     upload("network/context/common/network","/home/#{g5k_user}/snooze-capistrano/network/context/common/network")
+  end
+
+  desc 'Generate iso file'
+  task :context, :roles=>[:nfs_server] do
+    run "genisoimage -RJ -o /tmp/snooze/images/context.iso /home/#{g5k_user}/snooze-capistrano/network/context"
   end
 
   desc 'Start VMs'
