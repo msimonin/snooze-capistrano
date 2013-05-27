@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'xp5k'
 require 'erb'
 load 'config/deploy.rb' 
@@ -9,7 +10,7 @@ myxp = XP5K::XPM.new(:logger => logger)
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_bootstraps}, walltime=#{walltime}"],
-  :sites      => %w( lyon ),
+  :sites      => %w( reims ),
   :types      => ["deploy"],
   :name       => "bootstrap",
   :command    => "sleep 86400"
@@ -17,7 +18,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( lyon ) ,
+  :sites      => %w( reims ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
@@ -25,7 +26,7 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( lyon),
+  :sites       => %w( reims),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
@@ -33,14 +34,14 @@ myxp.define_job({
 
 myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],
-  :sites       => %w( lyon ),
+  :sites       => %w( reims ),
   :name       => "subnet",
   :command    => "sleep 86400"
 })
 =begin
 myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
-  :sites       => %w( lyon ),
+  :sites       => %w( reims ),
   :name       => "vlan",
   :command    => "sleep 86400"
 })
@@ -73,11 +74,11 @@ role :localcontroller do
 end
 
 role :frontend do
-  %w( lyon )
+  %w( reims )
 end
 
 role :subnet do
-  %w( lyon )
+  %w( reims )
 end
 
 after "automatic","submit","deploy", "prepare","rabbit", "bootstrap", "groupmanager", "localcontroller", "nfs","cluster:prepare","cluster:copy","cluster:network","cluster:context", "cluster:start"
@@ -176,16 +177,15 @@ namespace :bootstrap do
   end
   
   desc 'Generate bootstrap.pp template and deploy it on the frontend'
-  task :template, roles => [:subnet] do
+  task :template, :roles => [:subnet] do
     set :user, "#{g5k_user}"
+    template = File.read("templates/snoozenode.erb")
+    renderer = ERB.new(template)
     @nodeType             = "bootstrap"
     @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
     @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
     @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
     @externalNotificationHost = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-
-    template = File.read("templates/snoozenode.erb")
-    renderer = ERB.new(template)
     generate = renderer.result(binding)
     myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
