@@ -2,12 +2,13 @@
 # Fill your specific parameters below
 #
 
-master_node = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+dfs_master = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 dfs_type = "glusterfs"
 dfs_volume = "/G5K_gluster"
 data_nodes = $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
 client_nodes = $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
 dfs_local = "/tmp/snoozedfs"
+options = "defaults"
 
 # dfs5k can be called from any frontend 
 role :singlefrontend do
@@ -30,7 +31,7 @@ namespace :storage do
     transfer
     deploy
     template
-    transfer
+    transfer_client
     apply
   end
 
@@ -44,7 +45,7 @@ namespace :storage do
   task :generate do
     template = File.read("templates/#{dfs_type}.erb")
     renderer = ERB.new(template)
-    @master = "#{master_node}"
+    @master = "#{dfs_master}"
     @master = "root@" + @master
     @datanodes = data_nodes
     @datanodes.map!{|item| "root@"+item+":/tmp"}
@@ -74,7 +75,7 @@ namespace :storage do
     @dfstype = "#{dfs_type}"
     @dfsmaster = "#{dfs_master}"
     @volume = "#{dfs_volume}"
-    @local  = "#{nfs_local}"
+    @local  = "#{dfs_local}"
     @options = "#{options}"
     generate = renderer.result(binding)
     myFile = File.open("tmp/dfs-client.pp", "w")
@@ -82,7 +83,7 @@ namespace :storage do
     myFile.close
   end
 
-  task :transfer, roles => [:frontend] do
+  task :transfer_client, :roles => [:frontend] do
    set :user, "#{g5k_user}"
    upload("tmp/dfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/dfs-client.pp")
 
