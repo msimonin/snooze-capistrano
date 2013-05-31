@@ -4,10 +4,10 @@
 
 dfs_master = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 dfs_type = "glusterfs"
-dfs_volume = "/G5K_gluster"
+dfs_volume = "/G5K_Gluster"
 data_nodes = $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
 client_nodes = $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
-dfs_local = "/tmp/snoozedfs"
+dfs_local = "/tmp/snoozedfs2"
 
 # dfs5k can be called from any frontend 
 role :singlefrontend do
