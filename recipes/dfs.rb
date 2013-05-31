@@ -1,32 +1,57 @@
-puts "in dfs recipe"
+#
+# Fill your specific parameters below
+#
+
+master_node = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+dfs_type = "glusterfs"
+dfs_volume = "/G5K_gluster"
+data_nodes = $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+client_nodes = $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
+dfs_local = "/tmp/snoozedfs"
+
+# dfs5k can be called from any frontend 
+role :singlefrontend do
+  %w( reims )
+end
+
+role :client do
+  client_nodes
+end
+
+#
+# Main recipe below
+#
+
 namespace :storage do
 
-  desc 'Deploy Glusterfs on nodes'
+  desc 'Deploy DFS on nodes'
   task :default do
     generate
     transfer
     deploy
-    mount
+    template
+    transfer
+    apply
   end
 
-  desc 'Undeploy Glusterfs on nodes'
+  desc 'Undeploy DFS on nodes'
   task :undeploy do
     unmount
     undeploy
   end
 
-  desc 'Generate GlusterFS config file' 
+  desc 'Generate DFS config file' 
   task :generate do
-    template = File.read("templates/glusterfs.erb")
+    template = File.read("templates/#{dfs_type}.erb")
     renderer = ERB.new(template)
-    @master = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+    @master = "#{master_node}"
     @master = "root@" + @master
-    @datanodes = $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}").clone
+    @datanodes = data_nodes
     @datanodes.map!{|item| "root@"+item+":/tmp"}
-    @clientnodes = $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}").clone
+    @clientnodes = client_nodes
     @clientnodes.map!{|item| "root@"+item }
     generate = renderer.result(binding)
-    myFile = File.open("tmp/glusterfs", "w")
+    myFile = File.open("tmp/#{dfs_type}", "w")
     myFile.write(generate)
     myFile.close
   end
@@ -34,35 +59,52 @@ namespace :storage do
   desc 'Transfer the config file'
   task :transfer, :roles => [:singlefrontend] do
     set :user, "#{g5k_user}"
-    upload("tmp/glusterfs","/home/#{g5k_user}/glusterfs")  
+    upload("tmp/#{dfs_type}","/home/#{g5k_user}/#{dfs_type}")  
   end
 
-  desc 'Deploy Glusterfs'
+  desc 'Deploy DFS'
   task :deploy, :roles => [:singlefrontend] do
     set :user, "#{g5k_user}"
-    run "dfs5k -a deploy -s glusterfs -f /home/#{g5k_user}/glusterfs"
-  end
-
-  desc 'Mount Glusterfs'
-  task :mount, :roles => [:localcontroller] do
-    set :user, "root"
-    #run "dfs5k -a mount -s glusterfs -f /home/#{g5k_user}/glusterfs"
-    @master = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
-    puts "mount -t glusterfs #{@master}:/G5K_Gluster /tmp/snooze "
-    run "mount -t glusterfs #{@master}:/G5K_Gluster /tmp/snooze "
+    run "dfs5k -a deploy -s #{dfs_type} -f /home/#{g5k_user}/#{dfs_type}"
   end
   
-  desc 'Undeploy Glusterfs'
-  task :undeploy, :roles => [:singlefrontend] do
-    set :user, "#{g5k_user}"
-    run "dfs5k -a undeploy -s glusterfs -f /home/#{g5k_user}/glusterfs"
+  task :template do
+    template = File.read("templates/dfs-client.erb")
+    renderer = ERB.new(template)
+    @dfstype = "#{dfs_type}"
+    @dfsmaster = "#{dfs_master}"
+    @volume = "#{dfs_volume}"
+    @local  = "#{nfs_local}"
+    @options = "#{options}"
+    generate = renderer.result(binding)
+    myFile = File.open("tmp/dfs-client.pp", "w")
+    myFile.write(generate)
+    myFile.close
   end
 
-  desc 'Unmount Glusterfs'
-  task :unmount, :roles => [:frontend] do
+  task :transfer, roles => [:frontend] do
+   set :user, "#{g5k_user}"
+   upload("tmp/dfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/dfs-client.pp")
+
+  end
+
+  desc 'Mount DFS'
+  task :apply, :roles => [:client] do
+    set :user, "root"
+#    run "dfs5k -a mount -s glusterfs -f /home/#{g5k_user}/glusterfs"
+    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/dfs-client.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
+  end
+  
+  desc 'Undeploy DFS'
+  task :undeploy, :roles => [:singlefrontend] do
     set :user, "#{g5k_user}"
-    run "dfs5k -a unmount -s glusterfs -f /home/#{g5k_user}/glusterfs"
-    #run "dfs5k -a unmount -s glusterfs -f /home/#{g5k_user}/glusterfs"
+    run "dfs5k -a undeploy -s #{dfs_type} -f /home/#{g5k_user}/#{dfs_type}"
+  end
+
+  desc 'Unmount DFS'
+  task :unmount, :roles => [:singlefrontend] do
+    set :user, "#{g5k_user}"
+    run "dfs5k -a unmount -s #{dfs_type} -f /home/#{g5k_user}/#{dfs_type}"
   end
 
 end

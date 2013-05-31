@@ -1,9 +1,31 @@
+#
+# Fill below with your specific parameters
+#
+
 host = $myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
-nfs_shared = "/tmp/snooze24"
-nfs_local = "/tmp/snooze24"
+nfs_shared = "/tmp/snooze27"
+nfs_local = "/tmp/snooze27"
 uid = "snoozeadmin"
 gid = "snooze"
-options = "rw,nfsvers=3,hard,intr,async,noatime,nodev,nosuid,auto,rsize=32768,wsize=32768"
+options = "rw,nfsvers=3,hard,intr,async,noatime,nodev,nosuid,auto,rsize=32768,wsize=32768" 
+
+role :nfs_server do
+  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+end
+
+role :nfs_slave do 
+  $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+end
+
+# frontend is defined in Capfile 
+#
+# role :frontend do
+#
+#end
+
+#
+# Capistrano recipe to configure nfs share between node on grid'5000
+#
 
 namespace :storage do
 
@@ -67,7 +89,7 @@ namespace :storage do
     upload("tmp/nfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp")
   end
 
-  task :apply_client, :roles => [:localcontroller] do
+  task :apply_client, :roles => [:nfs_slave] do
     set :user, "root"
       run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
   end
