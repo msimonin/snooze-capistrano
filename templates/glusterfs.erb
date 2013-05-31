@@ -1,0 +1,8 @@
+name: G5K_Gluster
+options: stripe <%= @datanodes.length %>
+master: <%= @master %>
+dataNodes:
+<% @datanodes.each do |datanode| %><%="  " + datanode + "\n"%><%  end %>
+clients:
+<% @clientnodes.each do |clientnode| %><%= "  " + clientnode + "\n" %><%  end %>
+
