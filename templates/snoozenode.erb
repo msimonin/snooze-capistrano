@@ -1,6 +1,3 @@
- include "libvirt"
- include "zookeeper"
- include "java"
  include "git"
  include "genisoimage"
  include "snoozeclient"
@@ -27,11 +24,6 @@ class {
 	    'zookeeper::zookeeperd': 
        zookeeperHosts            => [\"" + @zookeeperdHosts + "\"],
   }
-
-  class { 
-	    'snoozenode::nfs': 
-  }
-
 "
 %>
 <%  end %>
