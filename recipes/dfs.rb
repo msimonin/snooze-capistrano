@@ -8,7 +8,6 @@ dfs_volume = "/G5K_gluster"
 data_nodes = $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
 client_nodes = $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
 dfs_local = "/tmp/snoozedfs"
-options = "defaults"
 
 # dfs5k can be called from any frontend 
 role :singlefrontend do
@@ -76,7 +75,6 @@ namespace :storage do
     @dfsmaster = "#{dfs_master}"
     @volume = "#{dfs_volume}"
     @local  = "#{dfs_local}"
-    @options = "#{options}"
     generate = renderer.result(binding)
     myFile = File.open("tmp/dfs-client.pp", "w")
     myFile.write(generate)
