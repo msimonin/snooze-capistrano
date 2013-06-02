@@ -1,13 +1,32 @@
+load "./recipes/nfs_functions.rb"
+
 #
 # Fill below with your specific parameters
 #
+=begin
+def host
+  host = $myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
+end
 
-host = $myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
-nfs_shared = "/tmp/snooze27"
-nfs_local = "/tmp/snooze27"
-uid = "snoozeadmin"
-gid = "snooze"
-options = "rw,nfsvers=3,hard,intr,async,noatime,nodev,nosuid,auto,rsize=32768,wsize=32768" 
+def nfs_shared
+  "/tmp/snooze27"
+end
+
+def nfs_local
+  "/tmp/snooze27"
+end
+
+def uid
+  "snoozeadmin"
+end
+
+def gid
+  "snooze"
+end
+
+def options
+  "rw,nfsvers=3,hard,intr,async,noatime,nodev,nosuid,auto,rsize=32768,wsize=32768" 
+end
 
 role :nfs_server do
   $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
@@ -16,6 +35,7 @@ end
 role :nfs_slave do 
   $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
 end
+=end
 
 # frontend is defined in Capfile 
 #
@@ -77,7 +97,8 @@ namespace :storage do
     @nfshost = "#{host}"
     @shared = "#{nfs_shared}"
     @local  = "#{nfs_local}"
-    @options = "#{options}"
+    @options = "#{nfs_options}"
+
     generate = renderer.result(binding)
     myFile = File.open("tmp/nfs-client.pp", "w")
     myFile.write(generate)

@@ -2,12 +2,31 @@
 # Fill your specific parameters below
 #
 
-dfs_master = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
-dfs_type = "glusterfs"
-dfs_volume = "/G5K_Gluster"
-data_nodes = $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
-client_nodes = $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
-dfs_local = "/tmp/snoozedfs2"
+#dfs_master = $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+load "recipes/dfs_functions.rb"
+=begin
+def dfs_master
+ $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+end
+def dfs_type()
+  "glusterfs"
+end
+
+def dfs_volume()
+  "/G5K_Gluster"
+end
+
+def data_nodes()
+  $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+end
+
+def client_nodes()
+  $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
+end
+
+def dfs_local()
+  "/tmp/snooze"
+end
 
 # dfs5k can be called from any frontend 
 role :singlefrontend do
@@ -17,7 +36,7 @@ end
 role :client do
   client_nodes
 end
-
+=end
 #
 # Main recipe below
 #
@@ -44,12 +63,12 @@ namespace :storage do
   task :generate do
     template = File.read("templates/#{dfs_type}.erb")
     renderer = ERB.new(template)
-    @master = "#{dfs_master}"
+    @master = dfs_master
     @master = "root@" + @master
     @datanodes = data_nodes
-    @datanodes.map!{|item| "root@"+item+":/tmp"}
+    @datanodes = @datanodes.map{|item| "root@"+item+":/tmp"}
     @clientnodes = client_nodes
-    @clientnodes.map!{|item| "root@"+item }
+    @clientnodes = @clientnodes.map{|item| "root@"+item }
     generate = renderer.result(binding)
     myFile = File.open("tmp/#{dfs_type}", "w")
     myFile.write(generate)
@@ -71,10 +90,10 @@ namespace :storage do
   task :template do
     template = File.read("templates/dfs-client.erb")
     renderer = ERB.new(template)
-    @dfstype = "#{dfs_type}"
-    @dfsmaster = "#{dfs_master}"
-    @volume = "#{dfs_volume}"
-    @local  = "#{dfs_local}"
+    @dfstype = dfs_type
+    @dfsmaster = dfs_master
+    @volume = dfs_volume
+    @local  = dfs_local
     generate = renderer.result(binding)
     myFile = File.open("tmp/dfs-client.pp", "w")
     myFile.write(generate)
