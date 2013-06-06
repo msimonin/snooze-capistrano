@@ -4,12 +4,11 @@ require 'xp5k'
 require 'erb'
 load 'config/deploy.rb' 
 
-
 XP5K::Config.load
 
-myxp = XP5K::XPM.new(:logger => logger)
+$myxp = XP5K::XPM.new(:logger => logger)
 
-myxp.define_job({
+$myxp.define_job({
   :resources  => ["nodes=#{nb_bootstraps}, walltime=#{walltime}"],
   :sites      => %w( reims ),
   :types      => ["deploy"],
@@ -17,7 +16,7 @@ myxp.define_job({
   :command    => "sleep 86400"
 })
 
-myxp.define_job({
+$myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
   :sites      => %w( reims ) ,
   :types      => ["deploy"],
@@ -25,7 +24,7 @@ myxp.define_job({
   :command    => "sleep 86400"
 })
 
-myxp.define_job({
+$myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
   :sites       => %w( reims ),
   :types      => ["deploy"],
@@ -33,20 +32,20 @@ myxp.define_job({
   :command    => "sleep 86400"
 })
 
-myxp.define_job({
+$myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],
   :sites       => %w( reims ),
   :name       => "subnet",
   :command    => "sleep 86400"
 })
-myxp.define_job({
+$myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
   :sites       => %w( reims ),
   :name       => "vlan",
   :command    => "sleep 86400"
 })
 
-myxp.define_deployment({
+$myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
   :jobs           => %w{bootstrap groupmanager localcontroller},
   :key            => File.read("#{ssh_public}"), 
@@ -54,27 +53,27 @@ myxp.define_deployment({
 })
 
 role :bootstrap do
-  myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :first_bootstrap do
-  myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :nfs_server do
-  myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :rabbitmq_server do
-  myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :groupmanager do
-  myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+  $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
 end
 
 role :localcontroller do
-  myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
+  $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
 end
 
 role :frontend do
@@ -85,7 +84,9 @@ role :subnet do
   %w( reims )
 end
 
-after "automatic","submit","deploy", "prepare","rabbit", "provision","localcontroller:bridge_network", "nfs","cluster"
+load 'recipes/dfs.rb'
+
+after "automatic","submit","deploy", "prepare","rabbit", "provision","localcontroller:bridge_network","storage","cluster"
 
 desc 'automatic deploiement'
 task :automatic do
@@ -101,23 +102,23 @@ end
 
 desc 'Submit jobs'
 task :submit do
-  myxp.submit
+  $myxp.submit
 end
 
 desc 'Deploy with Kadeploy'
 task :deploy  do
-  myxp.deploy
+  $myxp.deploy
 end
 
 desc 'Status'
 task :status do
-  myxp.status
+  $myxp.status
 end
 
 desc 'Remove all running jobs'
 task :clean do
   logger.debug "Clean all Grid'5000 running jobs..."
-  myxp.clean
+  $myxp.clean
 end
 
 desc 'Run check command'
@@ -133,7 +134,7 @@ end
 desc 'Give the ssh tunnel to the first bootstrap'
 task :tunnel_bs, :roles=>[:bootstrap]  do
   print "###### First bootstrap ##### \n"
-  set :first_bs, myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+  set :first_bs, $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
   puts "ssh -L 5000:#{first_bs}:5000 #{g5k_user}@access.grid5000.fr \n"
   print "###### First bootstrap ##### \n"
 end
@@ -183,7 +184,7 @@ namespace :provision do
   desc 'Generate templates for all nodes'
   task :template, :roles => [:subnet] do
     set :user, "#{g5k_user}"
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
+    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
     bootstrap
     groupmanager
     localcontroller
@@ -215,9 +216,9 @@ namespace :provision do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "bootstrap"
-    @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
@@ -229,9 +230,9 @@ namespace :provision do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "groupmanager"
-    @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/groupmanager.pp", "w")
     myFile.write(generate)
@@ -244,9 +245,9 @@ namespace :provision do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "localcontroller"
-    @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/localcontroller.pp", "w")
     myFile.write(generate)
@@ -271,10 +272,10 @@ namespace :bootstrap do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "bootstrap"
-    @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
-    @externalNotificationHost = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
+    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
     generate = renderer.result(binding)
     myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
@@ -309,10 +310,10 @@ namespace :groupmanager do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType = "groupmanager"
-    @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
-    @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
+    @externalNotificationHost = $myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     generate = renderer.result(binding)
     myFile = File.open("tmp/groupmanager.pp", "w")
@@ -351,10 +352,10 @@ namespace :localcontroller do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType = "localcontroller"
-    @zookeeperHosts       = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + myxp.job_with_name('subnet')['uid'].to_s)
-    @externalNotificationHost = myxp.job_with_name('bootstrap')['assigned_nodes'].first
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
+    @externalNotificationHost = $myxp.job_with_name('bootstrap')['assigned_nodes'].first
 
     generate = renderer.result(binding)
     myFile = File.open("tmp/localcontroller.pp", "w")
@@ -414,7 +415,7 @@ namespace :nfs do
     set :user, "#{g5k_user}"
     template = File.read("templates/nfs-client.erb")
     renderer = ERB.new(template)
-    @nfshost =  myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
+    @nfshost =  $myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
     generate = renderer.result(binding)
     myFile = File.open("tmp/nfs-client.pp", "w")
     myFile.write(generate)
@@ -484,7 +485,7 @@ namespace :cluster do
   desc 'Interface contextualization generation'
   task :interfaces, :roles=>[:frontend] do
     set :user, "#{g5k_user}"
-    subnet_id = myxp.job_with_name('subnet')['uid'].to_s
+    subnet_id = $myxp.job_with_name('subnet')['uid'].to_s
     @gateway=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
     @network=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $5}'")
     @broadcast=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $2}'")
