@@ -1,0 +1,67 @@
+GIT
+  remote: git://github.com/msimonin/xp5k.git
+  revision: 15c830f9fcda6055012db5e7a1731203ff1e34a0
+  specs:
+    xp5k (0.0.2)
+      json (>= 1.5.1)
+      restfully (~> 0.6)
+      term-ansicolor (>= 1.0.7)
+
+GIT
+  remote: git://github.com/pmorillon/tepacap.git
+  revision: 110be7695aa49d8f2de061c81264025b687f4cb0
+  specs:
+    tepacap (0.0.1)
+      net-ssh (>= 2.1.4)
+      net-ssh-gateway (>= 1.1.0)
+      term-ansicolor (>= 1.0.7)
+      thread_storm (>= 0.7.0)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    addressable (2.3.4)
+    backports (3.3.1)
+    capistrano (2.14.1)
+      highline
+      net-scp (>= 1.0.0)
+      net-sftp (>= 2.0.0)
+      net-ssh (>= 2.0.14)
+      net-ssh-gateway (>= 1.1.0)
+    highline (1.6.15)
+    json (1.8.0)
+    mime-types (1.23)
+    net-scp (1.0.4)
+      net-ssh (>= 1.99.1)
+    net-sftp (2.0.5)
+      net-ssh (>= 2.0.9)
+    net-ssh (2.6.7)
+    net-ssh-gateway (1.2.0)
+      net-ssh (>= 2.6.5)
+    rack (1.5.2)
+    rack-cache (1.2)
+      rack (>= 0.4)
+    rest-client (1.6.7)
+      mime-types (>= 1.16)
+    rest-client-components (1.2.0)
+      rack (>= 1.0.1)
+      rest-client (>= 1.6.0, < 1.7.0)
+    restfully (0.8.8)
+      addressable
+      backports
+      json (~> 1.5)
+      rack-cache
+      rest-client (~> 1.6)
+      rest-client-components
+    term-ansicolor (1.2.2)
+      tins (~> 0.8)
+    thread_storm (0.7.1)
+    tins (0.8.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  capistrano
+  tepacap!
+  xp5k!
