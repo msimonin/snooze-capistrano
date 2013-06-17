@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 GIT
   remote: https://github.com/msimonin/xp5k.git
   revision: 39c0a8b61781baa3b5621b8236806342867c56a4
+=======
+PATH
+  remote: /home/msimonin/github/xp5k
+>>>>>>> aed9a3dfa304627548c0961157400f40640db7a8
   specs:
     xp5k (0.0.2)
       json (>= 1.5.1)
