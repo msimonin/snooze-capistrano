@@ -12,10 +12,9 @@ ssh_options[:keys]= [File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa")]
 set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 
 
-set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "1:00:00"
+set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "5:00:00"
 set :nb_bootstraps, ENV['bootstraps'] || "1"
 set :nb_groupmanagers, ENV['groupmanagers'] || "2"
 set :nb_localcontrollers, ENV['localcontrollers'] || "2"
 set :subnet, ENV['subnet'] || "slash_22"
 set :vlan, ENV['vlan'] || "-1"
-

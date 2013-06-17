@@ -10,7 +10,7 @@ $myxp = XP5K::XPM.new(:logger => logger)
 
 $myxp.define_job({
   :resources  => ["nodes=#{nb_bootstraps}, walltime=#{walltime}"],
-  :sites      => %w( reims ),
+  :sites      => %w( rennes ),
   :types      => ["deploy"],
   :name       => "bootstrap",
   :command    => "sleep 86400"
@@ -18,7 +18,7 @@ $myxp.define_job({
 
 $myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( reims ) ,
+  :sites      => %w( rennes ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
@@ -26,67 +26,78 @@ $myxp.define_job({
 
 $myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( reims ),
+  :sites       => %w( rennes ),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
 })
 
 $myxp.define_job({
-  :resources  => ["#{subnet}=1, walltime=#{walltime}"],
-  :sites       => %w( reims ),
-  :name       => "subnet",
-  :command    => "sleep 86400"
-})
-$myxp.define_job({
-  :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
-  :sites       => %w( reims ),
-  :name       => "vlan",
+  :resources  => ["nodes=3, walltime=#{walltime}"],
+  :sites       => %w( rennes ),
+  :types      => ["deploy"],
+  :name       => "dfs",
   :command    => "sleep 86400"
 })
 
+$myxp.define_job({
+  :resources  => ["#{subnet}=1, walltime=#{walltime}"],
+  :sites       => %w( rennes ),
+  :name       => "subnet",
+  :command    => "sleep 86400"
+})
+
+=begin
+$myxp.define_job({
+  :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
+  :sites       => %w( rennes ),
+  :name       => "vlan",
+  :command    => "sleep 86400"
+})
+=end
+
 $myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
-  :jobs           => %w{bootstrap groupmanager localcontroller},
+  :jobs           => %w{bootstrap groupmanager localcontroller dfs},
   :key            => File.read("#{ssh_public}"), 
 #  :vlan           => "#{vlan}"
 })
 
 role :bootstrap do
-  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :first_bootstrap do
-  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :nfs_server do
-  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :rabbitmq_server do
-  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :groupmanager do
-  $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+  $myxp.get_deployed_nodes('groupmanager', kavlan="#{vlan}")
 end
 
 role :localcontroller do
-  $myxp.get_assigned_nodes('localcontroller', kavlan="#{vlan}")
+  $myxp.get_deployed_nodes('localcontroller', kavlan="#{vlan}")
 end
 
 role :frontend do
-  %w( reims )
+  %w( rennes )
 end
 
 role :subnet do
-  %w( reims )
+  %w( rennes )
 end
 
-load 'recipes/dfs.rb'
+load 'recipes/nfs.rb'
 
-after "automatic","submit","deploy", "prepare","rabbit", "provision","localcontroller:bridge_network","storage","cluster"
+after "automatic","submit","deploy", "prepare","storage", "rabbit", "provision","cluster"
 
 desc 'automatic deploiement'
 task :automatic do
@@ -134,7 +145,7 @@ end
 desc 'Give the ssh tunnel to the first bootstrap'
 task :tunnel_bs, :roles=>[:bootstrap]  do
   print "###### First bootstrap ##### \n"
-  set :first_bs, $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+  set :first_bs, $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
   puts "ssh -L 5000:#{first_bs}:5000 #{g5k_user}@access.grid5000.fr \n"
   print "###### First bootstrap ##### \n"
 end
@@ -198,15 +209,6 @@ namespace :provision do
     upload("tmp/localcontroller.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp")
   end
 
-  desc 'provision all the nodes'
-  task :provision, :roles => [:bootstrap, :groupmanager, :localcontroller] do
-    set :user, 'root'
-    parallel do |session|
-      session.when "in?(:bootstrap)", "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-      session.when "in?(:groupmanager)", "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-      session.when "in?(:localcontroller)", "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-    end
-  end 
 
   desc 'Generate template for bootstrap'
   task :bootstrap do
@@ -216,9 +218,9 @@ namespace :provision do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "bootstrap"
-    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
@@ -230,9 +232,9 @@ namespace :provision do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "groupmanager"
-    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/groupmanager.pp", "w")
     myFile.write(generate)
@@ -245,142 +247,26 @@ namespace :provision do
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "localcontroller"
-    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/localcontroller.pp", "w")
     myFile.write(generate)
     myFile.close
   end
+
+  desc 'provision all the nodes'
+  task :provision, :roles => [:bootstrap, :groupmanager, :localcontroller] do
+    set :user, 'root'
+    parallel do |session|
+      session.when "in?(:bootstrap)", "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
+      session.when "in?(:groupmanager)", "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
+      session.when "in?(:localcontroller)", "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
+    end
+  end 
 
 end
-
-
-namespace :bootstrap do
-  
-  desc 'deploy the bootstrap nodes'
-  task :default do
-    template
-    transfer
-    provision
-  end
-  
-  desc 'Generate bootstrap.pp template and deploy it on the frontend'
-  task :template, :roles => [:subnet] do
-    set :user, "#{g5k_user}"
-    template = File.read("templates/snoozenode.erb")
-    renderer = ERB.new(template)
-    @nodeType             = "bootstrap"
-    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
-    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    generate = renderer.result(binding)
-    myFile = File.open("tmp/bootstrap.pp", "w")
-    myFile.write(generate)
-    myFile.close
-  end
-
-  task :transfer, :roles => [:frontend] do
-    set :user, "#{g5k_user}"
-    upload("tmp/bootstrap.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp")
-  end
-
-  desc 'provision the bootstrap'
-  task :provision , :roles => [:bootstrap] do
-    set :user, 'root'
-    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/bootstrap.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-  end
-
-end # namespace bootstrap
-
-namespace :groupmanager do
-
-  desc 'Deploy the group manager nodes' 
-  task :default do
-    template
-    transfer
-    provision
-  end
-
-  desc 'Generate groupmanager.pp template and deploy it on the frontend'
-  task :template, :roles => [:subnet] do
-    set :user, "#{g5k_user}"
-    template = File.read("templates/snoozenode.erb")
-    renderer = ERB.new(template)
-    @nodeType = "groupmanager"
-    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
-    @externalNotificationHost = $myxp.job_with_name('bootstrap')['assigned_nodes'].first
-
-    generate = renderer.result(binding)
-    myFile = File.open("tmp/groupmanager.pp", "w")
-    myFile.write(generate)
-    myFile.close
-  end
-
-  task :transfer, :roles => [:frontend] do
-    upload("tmp/groupmanager.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp")
-  end
-
-
-  desc 'provision the groupmanagers'
-  task :provision, :roles => [:groupmanager] do
-    set :user, 'root'
-    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/groupmanager.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-  end	
-
-end # namespace groupmanager
-
-
-namespace :localcontroller do
-
-  desc 'Deploy the local controller nodes'
-  task :default do
-    template
-    transfer
-    provision
-    bridge_network 
- end
- 
-  
-  desc 'Generate localcontroller.pp template and deploy it on the frontend'
-  task :template, :roles => [:subnet] do
-    set :user, "#{g5k_user}" 
-    template = File.read("templates/snoozenode.erb")
-    renderer = ERB.new(template)
-    @nodeType = "localcontroller"
-    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
-    @externalNotificationHost = $myxp.job_with_name('bootstrap')['assigned_nodes'].first
-
-    generate = renderer.result(binding)
-    myFile = File.open("tmp/localcontroller.pp", "w")
-    myFile.write(generate)
-    myFile.close
-  end
-
-  task :transfer, :roles => [:frontend] do
-    upload("tmp/localcontroller.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp")
-  end
-
-  desc 'provision the local controllers'
-  task :provision, :roles => [:localcontroller] do
-    set :user, 'root'
-    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/localcontroller.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-  end	
-
-  desc 'Set up a bridge on hosts'
-  task :bridge_network, :roles => [:localcontroller] do
-    set :user, 'root'
-    run "cp /home/#{g5k_user}/snooze-capistrano/network/interfaces /etc/network/interfaces"
-    run "/home/#{g5k_user}/snooze-capistrano/network/configure_network.sh"
-  end
-
-end # namespace localcontroller    	
 
 namespace :rabbit do
   desc 'Configure the rabbitmq server'
@@ -395,58 +281,33 @@ namespace :rabbit do
   end
 end
 
-namespace :nfs do
-
-  desc 'Configure the nfs storage'
-  task :default do
-    server
-    template_client
-    provision_client
-  end
-  
-  desc 'Configure the nfs server'
-  task :server, :roles => [:nfs_server] do
-  set :user, "root"
-    run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-server.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-  end
-
-  desc 'Configure the nfs clients (localcontroller)' 
-  task :template_client, :roles => [:frontend] do
-    set :user, "#{g5k_user}"
-    template = File.read("templates/nfs-client.erb")
-    renderer = ERB.new(template)
-    @nfshost =  $myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
-    generate = renderer.result(binding)
-    myFile = File.open("tmp/nfs-client.pp", "w")
-    myFile.write(generate)
-    myFile.close
-    upload("tmp/nfs-client.pp","/home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp")
-  end
-
-  desc 'Provision the nfs client' 
-  task :provision_client, :roles => [:localcontroller] do
-  set :user, "root"
-  run "puppet apply /home/#{g5k_user}/snooze-capistrano/puppet/manifests/nfs-client.pp --modulepath=/home/#{g5k_user}/snooze-capistrano/puppet/modules/"
-  end
-
-end # namespace nfs
-
 namespace :cluster do
 
   desc 'Configure the cluster'
   task :default do
+    bridge_network
     prepare
     copy
     routes
     interfaces
     transfer
     context
+    fix_permissions
   end
+
+
+  desc 'Set up a bridge on hosts'
+  task :bridge_network, :roles => [:localcontroller] do
+    set :user, 'root'
+    run "cp /home/#{g5k_user}/snooze-capistrano/network/interfaces /etc/network/interfaces"
+    run "/home/#{g5k_user}/snooze-capistrano/network/configure_network.sh"
+   end
+
 
   desc 'Start cluster'
   task :start, :roles=>[:bootstrap, :groupmanager, :localcontroller] do
     set :user, "root"
-    run "/etc/init.d/snoozenode restart" 
+    run "/etc/init.d/snoozenode start" 
   end
 
   desc 'Stop cluster'
@@ -465,7 +326,8 @@ namespace :cluster do
   desc 'Copy base image'
   task :copy, :roles=>[:nfs_server] do
     set :user, "root"
-    run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
+    run "mkdir -p /tmp/snooze/images"
+    run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget -O /tmp/snooze/images/debian-hadoop-context-big.qcow2 http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
   end
   
   desc 'Routes contextualization generation'
@@ -509,6 +371,7 @@ namespace :cluster do
   desc 'Generate iso file'
   task :context, :roles=>[:nfs_server] do
     set :user, "root"
+    run "mkdir -p /tmp/snooze/images" 
     run "genisoimage -RJ -o /tmp/snooze/images/context.iso /home/#{g5k_user}/snooze-capistrano/network/context"
   end
 
@@ -517,5 +380,11 @@ namespace :cluster do
     set :user, "root"
     run "cd /tmp/snooze/experiments ; ./experiments.sh -c "+ ENV['vcn']+ " "+ENV['vms']
     run "snoozeclient start -vcn " + ENV['vcn']
+  end
+  
+  desc 'fix_permissions'
+  task 'fix_permissions', :roles => [:nfs_server] do
+    set :user, "root"
+    run "chown -R snoozeadmin:snooze /tmp/snooze"
   end
 end

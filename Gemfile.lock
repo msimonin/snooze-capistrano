@@ -1,27 +1,16 @@
-GIT
-  remote: git://github.com/msimonin/xp5k.git
-  revision: 15c830f9fcda6055012db5e7a1731203ff1e34a0
+PATH
+  remote: /home/msimonin/github/xp5k
   specs:
     xp5k (0.0.2)
       json (>= 1.5.1)
       restfully (~> 0.6)
       term-ansicolor (>= 1.0.7)
 
-GIT
-  remote: git://github.com/pmorillon/tepacap.git
-  revision: 110be7695aa49d8f2de061c81264025b687f4cb0
-  specs:
-    tepacap (0.0.1)
-      net-ssh (>= 2.1.4)
-      net-ssh-gateway (>= 1.1.0)
-      term-ansicolor (>= 1.0.7)
-      thread_storm (>= 0.7.0)
-
 GEM
   remote: http://rubygems.org/
   specs:
     addressable (2.3.4)
-    backports (3.3.1)
+    backports (3.3.2)
     capistrano (2.15.4)
       highline
       net-scp (>= 1.0.0)
@@ -55,13 +44,11 @@ GEM
       rest-client-components
     term-ansicolor (1.2.2)
       tins (~> 0.8)
-    thread_storm (0.7.1)
-    tins (0.8.0)
+    tins (0.8.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   capistrano
-  tepacap!
   xp5k!

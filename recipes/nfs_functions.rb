@@ -2,15 +2,15 @@
 # Fill below with your specific parameters
 #
 def host
-  $myxp.get_assigned_nodes('bootstrap',kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap',kavlan="#{vlan}").first
 end
 
 def nfs_shared
-  "/tmp/snooze27"
+  "/tmp/snooze"
 end
 
 def nfs_local
-  "/tmp/snooze27"
+  "/tmp/snooze"
 end
 
 def uid
@@ -26,10 +26,10 @@ def nfs_options
 end
 
 role :nfs_server do
-  $myxp.get_assigned_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}").first
 end
 
 role :nfs_slave do 
-  $myxp.get_assigned_nodes('groupmanager', kavlan="#{vlan}")
+  $myxp.get_deployed_nodes('localcontroller', kavlan="#{vlan}")
 end
 

@@ -1,4 +1,4 @@
 source "http://rubygems.org"
+ruby "1.9.3"
 gem "capistrano" 
-gem "tepacap", :git => "git://github.com/pmorillon/tepacap.git"
-gem "xp5k", :git => "git://github.com/msimonin/xp5k.git"
+gem "xp5k", :path => "/home/msimonin/github/xp5k"
