@@ -1,4 +1,4 @@
 
-up route add -net 172.16.160.0 netmask  255.255.240.0 dev eth0
+up route add -net 172.16.96.0 netmask  255.255.240.0 dev eth0
 up route del default
 
