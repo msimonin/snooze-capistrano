@@ -26,7 +26,7 @@ $myxp.define_job({
 
 $myxp.define_job({
   :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
+  :sites       => %w( rennes nancy),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
@@ -39,28 +39,26 @@ $myxp.define_job({
   :name       => "dfs",
   :command    => "sleep 86400"
 })
-
+=begin
 $myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],
   :sites       => %w( rennes ),
   :name       => "subnet",
   :command    => "sleep 86400"
 })
-
-=begin
+=end
 $myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
   :sites       => %w( rennes ),
-  :name       => "vlan",
+  :name       => "kavlan",
   :command    => "sleep 86400"
 })
-=end
 
 $myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
   :jobs           => %w{bootstrap groupmanager localcontroller dfs},
   :key            => File.read("#{ssh_public}"), 
-#  :vlan           => "#{vlan}"
+  :vlan           => "#{vlan}"
 })
 
 role :bootstrap do
@@ -88,7 +86,7 @@ role :localcontroller do
 end
 
 role :frontend do
-  %w( rennes )
+  $myxp.get_sites_with_jobs()
 end
 
 role :subnet do
@@ -175,8 +173,7 @@ end
     end
     run "https_proxy='http://proxy:3128' git clone  #{snooze_capistrano_repo_url}"
     run "cd snooze-capistrano ; https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} puppet" 
-    run "cd snooze-capistrano/puppet ; https_proxy='http://proxy:3128' git submodule init"
-    run "cd snooze-capistrano/puppet ; https_proxy='http://proxy:3128' git submodule update"
+    run "cd snooze-capistrano/puppet ; http_proxy='http://proxy:3128' rake modules:clone"
     run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O snooze-capistrano/puppet/modules/snoozenode/files/snoozenode.deb &2>&1"
     run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O snooze-capistrano/puppet/modules/snoozeclient/files/snoozeclient.deb &2>&1"
   end
@@ -195,7 +192,14 @@ namespace :provision do
   desc 'Generate templates for all nodes'
   task :template, :roles => [:subnet] do
     set :user, "#{g5k_user}"
-    @virtualMachineSubnet = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s)
+    if "#{vlan}"=="-1"
+      @virtualMachineSubnets = capture("g5k-subnets -p -j " + $myxp.job_with_name('subnet')['uid'].to_s).split
+    else
+      # generate subnets according to the kavlan id
+      kavlan = capture("kavlan -V -j " + $myxp.job_with_name('kavlan')['uid'].to_s)
+      b=(kavlan.to_i-10)*4+3
+      @virtualMachineSubnets = (216..255).step(2).to_a.map{|x| "10."+b.to_s+"."+x.to_s+".1/23"} 
+    end
     bootstrap
     groupmanager
     localcontroller
@@ -212,15 +216,12 @@ namespace :provision do
 
   desc 'Generate template for bootstrap'
   task :bootstrap do
-    puts "####"
-    puts @virtualMachineSubnet 
-    puts "####"
     template = File.read("templates/snoozenode.erb")
     renderer = ERB.new(template)
     @nodeType             = "bootstrap"
-    @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
-    @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
-    @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first 
+    @zookeeperHosts       = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @zookeeperdHosts      = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first
+    @externalNotificationHost = $myxp.get_assigned_nodes("bootstrap", kavlan="#{vlan}").first 
     generate = renderer.result(binding)
     myFile = File.open("tmp/bootstrap.pp", "w")
     myFile.write(generate)
@@ -288,7 +289,6 @@ namespace :cluster do
     bridge_network
     prepare
     copy
-    routes
     interfaces
     transfer
     context
@@ -330,29 +330,23 @@ namespace :cluster do
     run "cd /tmp/snooze/images ; https_proxy='http://proxy:3128' wget -O /tmp/snooze/images/debian-hadoop-context-big.qcow2 http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2"
   end
   
-  desc 'Routes contextualization generation'
-  task :routes, :roles=>[:first_bootstrap] do
-    set :user, "root"
-     @vlan = #{vlan}!="-1"
-     @vlan_net=capture("route | awk 'NR>3 {print $1}' | head -n 1").delete("\r\n")
-     @vlan_netmask=capture("route | awk 'NR>3 {print $3}' | head -n 1").delete("\r\n")
-     template = File.read("templates/routes.erb")
-     renderer = ERB.new(template)
-     generate = renderer.result(binding)
-     myFile = File.open("network/context/common/routes", "w")
-     myFile.write(generate)
-     myFile.close
-  end
-
   desc 'Interface contextualization generation'
   task :interfaces, :roles=>[:frontend] do
     set :user, "#{g5k_user}"
-    subnet_id = $myxp.job_with_name('subnet')['uid'].to_s
-    @gateway=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
-    @network=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $5}'")
-    @broadcast=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $2}'")
-    @netmask=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $3}'")
-    @nameserver=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
+    if "#{vlan}"=="-1" 
+      subnet_id = $myxp.job_with_name('subnet')['uid'].to_s
+      @gateway=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
+      @network=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $5}'")
+      @broadcast=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $2}'")
+      @netmask=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $3}'")
+      @nameserver=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
+    else
+      @gateway="10.27.255.254"
+      @network="10.27.192.0"
+      @broadcast="10.27.255.255"
+      @netmask="255.255.192.0"
+      @nameserver="131.254.203.235"
+    end
     template = File.read("templates/network.erb")
     renderer = ERB.new(template)
     generate = renderer.result(binding)

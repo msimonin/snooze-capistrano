@@ -12,7 +12,7 @@ class {
     multicastAddress          => "225.4.5.16",
     groupManagerHeartbeatPort => $groupManagerHeartbeatPort,
     zookeeperHosts            => ["<%= @zookeeperHosts %>"],
-    virtualMachineSubnet      => ["<%= @virtualMachineSubnet %>"],
+    virtualMachineSubnet      => <%= @virtualMachineSubnets %>,
     externalNotificationHost  => "<%= @externalNotificationHost %>"
 }
 
