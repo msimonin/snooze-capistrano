@@ -368,13 +368,22 @@ namespace :cluster do
     run "mkdir -p /tmp/snooze/images" 
     run "genisoimage -RJ -o /tmp/snooze/images/context.iso /home/#{g5k_user}/snooze-capistrano/network/context"
   end
+  
+  namespace :vms do
+    desc 'Start VMs'
+    task :start, :roles=>[:nfs_server] do
+      set :user, "root"
+      run "cd /tmp/snooze/experiments ; ./experiments.sh -c "+ ENV['vcn']+ " "+ENV['vms']
+      run "snoozeclient start -vcn " + ENV['vcn']
+    end
 
-  desc 'Start VMs'
-  task :vms, :roles=>[:nfs_server] do
-    set :user, "root"
-    run "cd /tmp/snooze/experiments ; ./experiments.sh -c "+ ENV['vcn']+ " "+ENV['vms']
-    run "snoozeclient start -vcn " + ENV['vcn']
+    desc 'Start VMs'
+    task :destroy, :roles=>[:nfs_server] do
+      set :user, "root"
+      run "snoozeclient destroy -vcn " + ENV['vcn']
+    end
   end
+
   
   desc 'fix_permissions'
   task 'fix_permissions', :roles => [:nfs_server] do
