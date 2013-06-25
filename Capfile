@@ -18,23 +18,23 @@ $myxp.define_job({
 
 $myxp.define_job({
   :resources  =>["nodes=#{nb_groupmanagers}, walltime=#{walltime}"],
-  :sites      => %w( rennes ) ,
+  :sites      => %w( rennes sophia lille ) ,
   :types      => ["deploy"],
   :name       => "groupmanager",
   :command    => "sleep 86400"
 })
 
 $myxp.define_job({
-  :resources  => ["nodes=#{nb_localcontrollers}, walltime=#{walltime}"],
-  :sites       => %w( rennes nancy),
+  :resources  => ["nodes=2, walltime=#{walltime}"],
+  :sites       => %w( rennes sophia nancy ),
   :types      => ["deploy"],
   :name       => "localcontroller",
   :command    => "sleep 86400"
 })
 
 $myxp.define_job({
-  :resources  => ["nodes=3, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
+  :resources  => ["nodes=2, walltime=#{walltime}"],
+  :sites       => %w( rennes nancy sophia ),
   :types      => ["deploy"],
   :name       => "dfs",
   :command    => "sleep 86400"
@@ -49,7 +49,7 @@ $myxp.define_job({
 =end
 $myxp.define_job({
   :resources  => ["{type='kavlan-global'}vlan=1, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
+  :sites       => %w( sophia ),
   :name       => "kavlan",
   :command    => "sleep 86400"
 })
@@ -90,10 +90,10 @@ role :frontend do
 end
 
 role :subnet do
-  %w( rennes )
+  %w( sophia )
 end
 
-load 'recipes/nfs.rb'
+load 'recipes/dfs.rb'
 
 after "automatic","submit","deploy", "prepare","storage", "rabbit", "provision","cluster"
 
@@ -331,7 +331,7 @@ namespace :cluster do
   end
   
   desc 'Interface contextualization generation'
-  task :interfaces, :roles=>[:frontend] do
+  task :interfaces, :roles=>[:subnet] do
     set :user, "#{g5k_user}"
     if "#{vlan}"=="-1" 
       subnet_id = $myxp.job_with_name('subnet')['uid'].to_s
@@ -341,9 +341,11 @@ namespace :cluster do
       @netmask=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $3}'")
       @nameserver=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
     else
-      @gateway="10.27.255.254"
-      @network="10.27.192.0"
-      @broadcast="10.27.255.255"
+      kavlan = capture("kavlan -V -j " + $myxp.job_with_name('kavlan')['uid'].to_s)
+      b=(kavlan.to_i-10)*4+3
+      @gateway="10."+b.to_s+".255.254"
+      @network="10."+b.to_s+".192.0"
+      @broadcast="10."+b.to_s+".255.255"
       @netmask="255.255.192.0"
       @nameserver="131.254.203.235"
     end
@@ -356,7 +358,7 @@ namespace :cluster do
   end
 
   desc 'Transfer context files to frontend'
-  task :transfer, :roles=>[:frontend] do
+  task :transfer, :roles=>[:subnet] do
     set :user, "#{g5k_user}"
     upload("network/context/common/network","/home/#{g5k_user}/snooze-capistrano/network/context/common/network")
     upload("network/context/common/routes","/home/#{g5k_user}/snooze-capistrano/network/context/common/routes")
