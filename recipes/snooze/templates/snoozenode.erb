@@ -1,0 +1,30 @@
+ include "snoozeclient"
+
+$groupManagerHeartbeatPort = 1000+$idfromhost
+
+class { 
+  'snoozenode':
+    type                      => "<%= @nodeType %>",
+    controlDataPort           => 5000,
+    listenAddress             => $ipaddress,
+    multicastAddress          => "225.4.5.16",
+    groupManagerHeartbeatPort => $groupManagerHeartbeatPort,
+    zookeeperHosts            => ["<%= @zookeeperHosts %>"],
+    virtualMachineSubnet      => <%= @virtualMachineSubnets %>,
+    externalNotificationHost  => "<%= @externalNotificationHost %>",
+    databaseType              => "memory",
+    databaseCassandraHosts    => <%= @databaseCassandraHosts %>
+}
+
+
+<% if @nodeType == "bootstrap" %>
+<%=
+  "
+  class { 
+	    'zookeeper::zookeeperd': 
+       zookeeperHosts            => [\"" + @zookeeperdHosts + "\"],
+  }
+"
+%>
+<%  end %>
+

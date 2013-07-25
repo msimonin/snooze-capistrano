@@ -1,0 +1,5 @@
+class { 'cassandra':
+  cluster_name  => "<%= @cassandra_name %>",
+  seeds         => <%= @cassandra_seeds %>,
+  repo_pin      => false
+}

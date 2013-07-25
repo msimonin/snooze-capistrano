@@ -1,0 +1,76 @@
+CREATE KEYSPACE snooze;
+
+USE snooze;
+
+
+CREATE COLUMN FAMILY virtualmachines with
+    comparator = UTF8Type and
+    default_validation_class = UTF8Type and
+    key_validation_class=UTF8Type and
+     column_metadata =
+     [
+        {column_name: 'ipAddress', validation_class: UTF8Type},
+        {column_name: 'xmlRepresention', validation_class: UTF8Type},
+        {column_name: 'status', validation_class: UTF8Type},
+        {column_name: 'errorCode', validation_class: UTF8Type},
+        {column_name: 'location', validation_class: UTF8Type},
+        {column_name: 'groupManager', validation_class: UTF8Type, index_type: KEYS},
+        {column_name: 'localController', validation_class: UTF8Type, index_type: KEYS}
+     ];
+
+
+CREATE COLUMN FAMILY virtualmachines_monitoring with
+    default_validation_class = UTF8Type and
+    key_validation_class=UTF8Type
+;
+
+CREATE COLUMN FAMILY  localcontrollers with
+     comparator = UTF8Type and
+     default_validation_class = UTF8Type and
+     key_validation_class=UTF8Type and
+     column_metadata =
+     [
+        {column_name: 'hostname', validation_class: UTF8Type},
+        {column_name: 'hypervisorSettings', validation_class:UTF8Type},
+        {column_name: 'totalCapacity', validation_class: UTF8Type},
+        {column_name: 'controlDataAddress', validation_class: UTF8Type},
+        {column_name: 'wakeUpSettings', validation_class: UTF8Type},
+        {column_name: 'isAssigned', validation_class: BooleanType},
+        {column_name: 'groupManager', validation_class: UTF8Type, index_type: KEYS},
+        {column_name: 'status', validation_class: UTF8Type, index_type: KEYS}
+
+     ];
+
+CREATE COLUMN FAMILY  localcontrollers_mapping with
+     comparator = UTF8Type and
+     default_validation_class = UTF8Type and
+     key_validation_class=UTF8Type and
+     column_metadata =
+     [
+        {column_name: 'id', validation_class: UTF8Type}
+     ]
+;
+
+CREATE COLUMN FAMILY groupmanagers_monitoring with
+    default_validation_class = UTF8Type and
+    key_validation_class=UTF8Type
+;
+
+CREATE COLUMN FAMILY groupmanagers with
+    comparator = UTF8Type and
+    default_validation_class = UTF8Type and
+    key_validation_class=UTF8Type and
+    column_metadata = 
+    [
+      {column_name : 'hostname', validation_class: UTF8Type},
+      {column_name : 'listenSettings', validation_class: UTF8Type},
+      {column_name : 'heartbeatAddress', validation_class: UTF8Type},
+      {column_name : 'isGroupLeader', validation_class: BooleanType},
+      {column_name : 'isAssigned', validation_class: BooleanType}
+    ]
+;
+
+CREATE COLUMN FAMILY ipspool with
+    comparator = UTF8Type and
+    default_validation_class = UTF8Type 
+;
