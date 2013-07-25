@@ -1,4 +1,5 @@
 source "http://rubygems.org"
-ruby "1.9.3"
 gem "capistrano" 
-gem "xp5k", :git => "https://github.com/msimonin/xp5k.git"
+gem "colored" 
+gem "shell-spinner"
+gem "xp5k", :git =>"http://github.com/msimonin/xp5k.git"

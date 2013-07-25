@@ -1,5 +1,5 @@
 GIT
-  remote: https://github.com/msimonin/xp5k.git
+  remote: http://github.com/msimonin/xp5k.git
   revision: 39c0a8b61781baa3b5621b8236806342867c56a4
   specs:
     xp5k (0.0.2)
@@ -10,14 +10,16 @@ GIT
 GEM
   remote: http://rubygems.org/
   specs:
-    addressable (2.3.4)
-    backports (3.3.2)
+    addressable (2.3.5)
+    backports (3.3.3)
     capistrano (2.15.4)
       highline
       net-scp (>= 1.0.0)
       net-sftp (>= 2.0.0)
       net-ssh (>= 2.0.14)
       net-ssh-gateway (>= 1.1.0)
+    colored (1.2)
+    colorize (0.5.8)
     highline (1.6.19)
     json (1.8.0)
     mime-types (1.23)
@@ -43,13 +45,17 @@ GEM
       rack-cache
       rest-client (~> 1.6)
       rest-client-components
+    shell-spinner (1.0.4)
+      colorize
     term-ansicolor (1.2.2)
       tins (~> 0.8)
-    tins (0.8.2)
+    tins (0.8.3)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   capistrano
+  colored
+  shell-spinner
   xp5k!

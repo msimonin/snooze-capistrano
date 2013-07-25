@@ -7,7 +7,14 @@ Once it's done, you just have to launch :
 
     bundle install
 
-## 2. Automatic deployment
+## 2. Look into the capfile the recipes you want to install
+
+This will install a rabbitmq server, a cassandra cluster, a nfs shared directory and ... snooze. 
+
+    recipes = ["rabbitmq", "cassandra", "nfs", "snooze"]
+
+
+## 3. Automatic deployment
 
 For the master version of Snooze
 
@@ -16,9 +23,5 @@ For the master version of Snooze
 For the testing version of Snooze
 
     cap testing automatic
-    
-
-
-
 
 

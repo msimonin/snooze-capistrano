@@ -1,4 +1,0 @@
-<% if @vlan %>
-<%= "up route add -net " +@vlan_net +" netmask  "+ @vlan_netmask +" dev eth0" %>
-<%= "up route del default" %>
-<% end %>
