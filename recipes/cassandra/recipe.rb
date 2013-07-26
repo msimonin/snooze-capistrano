@@ -60,11 +60,12 @@ namespace :cassandra do
     desc 'Install the database schema'
     task :default do
       transfer
-      system(sleep 5)
+      system("sleep 5")
       apply
     end
     
     task :transfer, :roles=> [:cassandra_first] do
+      set :user, "root"
       upload "#{cassandra_path}/schema/schemaup.cas", "/tmp/schemaup.cas"
       upload "#{cassandra_path}/schema/schemadown.cas", "/tmp/schemadown.cas"
     end

@@ -78,7 +78,7 @@ end
 
 before "cassandra:opscenter" do
   print " #{childmark}".blue
-  print "Installing opscenter...................."
+  print "Installing opscenter....................."
   start_spinner()
 end
 
