@@ -132,8 +132,8 @@ namespace :cluster do
     prepare
     copy
     interfaces
-    transfer
     context
+    transfer
     fix_permissions
   end
 
