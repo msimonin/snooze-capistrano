@@ -12,7 +12,7 @@ class {
     zookeeperHosts            => ["<%= @zookeeperHosts %>"],
     virtualMachineSubnet      => <%= @virtualMachineSubnets %>,
     externalNotificationHost  => "<%= @externalNotificationHost %>",
-    databaseType              => "memory",
+    databaseType              => "cassandra",
     databaseCassandraHosts    => <%= @databaseCassandraHosts %>
 }
 

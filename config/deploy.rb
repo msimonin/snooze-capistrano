@@ -23,7 +23,7 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 # relative to the capfile
 set :recipes_path, "./recipes"
 
-set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "4:30:00"
+set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "2:30:00"
 # snooze options
 set :nb_bootstraps, ENV['bootstraps'] || "1"
 set :nb_groupmanagers, ENV['groupmanagers'] || "2"

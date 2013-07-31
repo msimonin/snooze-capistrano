@@ -33,14 +33,6 @@ $myxp.define_job({
 })
 
 $myxp.define_job({
-  :resources  => ["nodes=4, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
-  :types      => ["deploy"],
-  :name       => "cassandra",
-  :command    => "sleep 86400"
-})
-
-$myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],
   :sites       => %w( rennes ),
   :name       => "subnet",
@@ -49,29 +41,8 @@ $myxp.define_job({
 
 $myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
-  :jobs           => %w{bootstrap groupmanager localcontroller cassandra},
+  :jobs           => %w{bootstrap groupmanager localcontroller},
   :key            => File.read("#{ssh_public}"), 
 })
 
-task :xp5k do
-  puts "  XP5K launched (submission and deployment)"
-end
-
-
-desc 'Submit jobs'
-task :submit do
-  $myxp.submit
-end
-
-desc 'Deploy with Kadeploy'
-task :deploy  do
-  $myxp.deploy
-end
-
-desc 'Remove all running jobs'
-task :clean do
-logger.debug "Clean all Grid'5000 running jobs..."
-  $myxp.clean
-end
-
-after "xp5k", "submit", "deploy"
+load "config/deploy/xp5k/xp5k_common_tasks.rb"

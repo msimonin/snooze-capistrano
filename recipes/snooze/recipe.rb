@@ -38,6 +38,12 @@ namespace :snooze do
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
     end
+
+    task :reprepare, :roles => [:frontend] do
+      set :user, "#{g5k_user}"
+      run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
+      run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
+    end
   end
 
   namespace :provision do
