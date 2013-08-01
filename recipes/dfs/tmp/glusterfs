@@ -1,0 +1,16 @@
+name: G5K_Gluster
+options: stripe 3
+master: root@parapluie-2.rennes.grid5000.fr
+dataNodes:
+  root@parapluie-2.rennes.grid5000.fr:/tmp
+  root@parapluie-20.rennes.grid5000.fr:/tmp
+  root@parapluie-21.rennes.grid5000.fr:/tmp
+
+clients:
+  root@parapluie-37.rennes.grid5000.fr
+  root@parapluie-38.rennes.grid5000.fr
+  root@parapluie-39.rennes.grid5000.fr
+  root@parapluie-4.rennes.grid5000.fr
+  root@parapluie-8.rennes.grid5000.fr
+
+
