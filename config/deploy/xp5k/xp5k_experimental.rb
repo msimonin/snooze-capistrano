@@ -39,6 +39,15 @@ $myxp.define_job({
   :name       => "cassandra",
   :command    => "sleep 86400"
 })
+=begin
+$myxp.define_job({
+  :resources  => ["nodes=3, walltime=#{walltime}"],
+  :sites       => %w( rennes ),
+  :types      => ["deploy"],
+  :name       => "dfs_data",
+  :command    => "sleep 86400"
+})
+=end
 
 $myxp.define_job({
   :resources  => ["#{subnet}=1, walltime=#{walltime}"],

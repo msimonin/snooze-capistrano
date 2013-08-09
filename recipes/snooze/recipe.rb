@@ -221,7 +221,9 @@ namespace :cluster do
   desc 'Stop cluster'
   task :stop, :roles=>[:bootstrap, :groupmanager, :localcontroller] do
     set :user, "root"
-    run "/etc/init.d/snoozenode stop" 
+    run "/etc/init.d/snoozenode stop"
+    run "killall kvm 2>1" 
+    run "rm /tmp/snooze_*"
   end
 
   # Dummy vm management ...
@@ -237,7 +239,39 @@ namespace :cluster do
       run "snoozeclient destroy -vcn " + ENV['vcn']
     end
   end
+ end
 
+  namespace :webserver do
+    task :default do
+      template
+      transfer
+      start
+    end
+
+    task :template do
+      # generate the initialization file to the cassandra cluster 
+      template = File.read("#{snooze_path}/templates/cassandra.yml.erb")
+      renderer = ERB.new(template)
+      @cassandra_hosts  = find_servers :roles=>[:cassandra]
+      generate = renderer.result(binding)
+      myFile = File.open("#{snooze_path}/tmp/cassandra.yml", "w")
+      myFile.write(generate)
+      myFile.close
+    end
+
+    task :transfer, :roles => [:first_bootstrap] do
+      # transfer all the filesa
+      set :user, "root"
+      upload 'File.join(ENV["HOME"], "ruby")', '/tmp/.', :recursive => true, :via => :scp
+    end
+
+    task :start, :roles => [:first_bootstrap] do
+      # start the web server
+        
+    end
+
+    task :stop, :roles => [:first_bootstrap] do
+      # stop the web server
+    end
   end
 end
-

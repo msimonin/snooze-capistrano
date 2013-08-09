@@ -60,7 +60,8 @@ namespace :cassandra do
     desc 'Install the database schema'
     task :default do
       transfer
-      system("sleep 5")
+      # Waiting for the system to be ready 
+      system("sleep 20")
       apply
     end
     

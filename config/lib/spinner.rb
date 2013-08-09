@@ -21,5 +21,5 @@ end
 # stops the spinner and backspaces over last displayed character
 def stop_spinner
   @spinner_running = false
-  print "\b"
+    print "\b"
 end

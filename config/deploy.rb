@@ -1,7 +1,7 @@
 require 'capistrano/ext/multistage'
 
 # Stages definition
-set :stages, %w(master maint1.0.0 testing experimental)
+set :stages, %w(master maint1.0.0 testing experimental sandbox)
 set :default_stage, "master"
 
 # Enable pretty output. Remove it if you want full logging
@@ -11,7 +11,7 @@ STDOUT.sync
 
 # Capistrano parameters
 set :g5k_user, "msimonin"
-set :gateway, "#{g5k_user}@access.grid5000.fr"
+set :gateway, "#{g5k_user}@grid5000.irisa.fr"
 set :snooze_capistrano_repo_url, "https://github.com/msimonin/snooze-capistrano.git"
 set :snooze_puppet_repo_url, "https://github.com/msimonin/snooze-puppet.git"
 set :snooze_experiments_repo_url, "https://github.com/snoozesoftware/snooze-experiments"
@@ -23,7 +23,7 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 # relative to the capfile
 set :recipes_path, "./recipes"
 
-set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "2:30:00"
+set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "6:00:00"
 # snooze options
 set :nb_bootstraps, ENV['bootstraps'] || "1"
 set :nb_groupmanagers, ENV['groupmanagers'] || "2"

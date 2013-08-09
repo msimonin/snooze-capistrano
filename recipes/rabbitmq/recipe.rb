@@ -32,7 +32,7 @@ namespace :rabbitmq do
   namespace :modules do
     task :install, :roles => [:rabbitmq] do
       set :user, "root"
-      run "https_proxy='http://proxy:3128' http_proxy='http://proxy:3128' puppet module install puppetlabs/rabbitmq"
+      run "https_proxy='http://proxy:3128' http_proxy='http://proxy:3128' puppet module install puppetlabs/rabbitmq --version 2.1.0"
    end
 
     task :uninstall, :roles => [:rabbitmq] do
