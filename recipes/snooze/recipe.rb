@@ -44,6 +44,12 @@ namespace :snooze do
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
     end
+
+    task :purge, :roles => [:all] do
+      set :user, "root"
+      run "dpkg --purge snoozenode 2>1"
+      run "dpkg --purge snoozeclient 2>1"
+    end
   end
 
   namespace :provision do

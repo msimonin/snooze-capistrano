@@ -13,7 +13,10 @@ class {
     virtualMachineSubnet      => <%= @virtualMachineSubnets %>,
     externalNotificationHost  => "<%= @externalNotificationHost %>",
     databaseType              => "cassandra",
-    databaseCassandraHosts    => <%= @databaseCassandraHosts %>
+    databaseCassandraHosts    => <%= @databaseCassandraHosts %>,
+    migrationMethod           => "forceunsafe",
+    migrationTimeout          => 60
+
 }
 
 
