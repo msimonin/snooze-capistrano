@@ -42,7 +42,8 @@ namespace :nfs do
 
     task :uninstall, :roles => [:nfs_server, :nfs_slave] do
       set :user, "root"
-      run "http_proxy='http://proxy:3128' https_proxy='http://proxy:3128' puppet module uninstall puppetlabs/stdlib"
+      run "http_proxy='http://proxy:3128' https_proxy='http://proxy:3128' puppet module uninstall --force puppetlabs/stdlib"
+      run "rm -rf /etc/puppet/modules/nfs"
    end
   end
 

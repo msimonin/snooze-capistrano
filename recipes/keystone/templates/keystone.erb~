@@ -1,0 +1,141 @@
+class { 'mysql::server': }
+
+mysql::db{ 'keystone':
+  user          => 'keystone',
+  password      => 'keystone',
+  grant         => 'all',
+}
+
+
+
+class { 'openstack::keystone':
+   db_host               => '127.0.0.1',
+   db_password           => 'keystone',
+   admin_token           => '12345',
+   admin_email           => 'keystone@localhost',
+   admin_password        => 'keystone',
+   glance_user_password  => 'glance',
+   nova_user_password    => 'nova',
+   cinder_user_password  => 'cinder',
+   neutron_user_password => 'neutron',
+   public_address        => '127.0.0.1',
+   internal_address      => '127.0.0.1',
+   admin_address         => '127.0.0.1'
+  }
+
+class openstack::keystone (
+  $db_password,
+  $admin_token,
+  $admin_email,
+  $admin_password,
+  $glance_user_password,
+  $nova_user_password,
+  $cinder_user_password,
+  $neutron_user_password,
+  $public_address,
+  $public_protocol          = 'http',
+  $db_host                  = '127.0.0.1',
+  $idle_timeout             = '200',
+  $db_type                  = 'mysql',
+  $db_user                  = 'keystone',
+  $db_name                  = 'keystone',
+  $admin_tenant             = 'admin',
+  $verbose                  = false,
+  $debug                    = false,
+  $bind_host                = '0.0.0.0',
+  $region                   = 'RegionOne',
+  $internal_address         = false,
+  $admin_address            = false,
+  $enabled                  = true
+) {
+
+  # Install and configure Keystone
+  if $db_type == 'mysql' {
+    $sql_conn = "mysql://${db_user}:${db_password}@${db_host}/${db_name}"
+  } else {
+    fail("db_type ${db_type} is not supported")
+  }
+
+  # munging b/c parameters are not
+  # set procedurally in Puppet
+  if($internal_address) {
+    $internal_real = $internal_address
+  } else {
+    $internal_real = $public_address
+  }
+  if($admin_address) {
+    $admin_real = $admin_address
+  } else {
+    $admin_real = $internal_real
+  }
+
+  class { '::keystone':
+    verbose        => $verbose,
+    debug          => $debug,
+    bind_host      => $bind_host,
+    idle_timeout   => $idle_timeout,
+    catalog_type   => 'sql',
+    admin_token    => $admin_token,
+    enabled        => $enabled,
+    sql_connection => $sql_conn,
+  }
+
+  if ($enabled) {
+    # Setup the admin user
+    class { 'keystone::roles::admin':
+      email        => $admin_email,
+      password     => $admin_password,
+      admin_tenant => $admin_tenant,
+    }
+
+    # Setup the Keystone Identity Endpoint
+    class { 'keystone::endpoint':
+      public_address   => $public_address,
+      public_protocol  => $public_protocol,
+      admin_address    => $admin_real,
+      internal_address => $internal_real,
+      region           => $region,
+    }
+  }
+
+  if ($glance) {
+    # setup glance
+   class { 'glance::api':
+     verbose           => 'True',
+     keystone_tenant   => 'services',
+     keystone_user     => 'glance',
+     keystone_password => '12345',
+     sql_connection    => 'mysql://glance:12345@127.0.0.1/glance',
+   }
+
+   class { 'glance::registry':
+     verbose           => 'True',
+     keystone_tenant   => 'services',
+     keystone_user     => 'glance',
+     keystone_password => '12345',
+     sql_connection    => 'mysql://glance:12345@127.0.0.1/glance',
+   }
+
+   class { 'glance::backend::file': }
+
+
+   class { 'glance::db::mysql':
+     password      => '12345',
+     allowed_hosts => '%',
+   }
+
+   class { 'glance::keystone::auth':
+     password         => '12345'
+     public_address   => '172.17.0.3',
+     admin_address    => 'admin@example.com',
+     internal_address => '172.17.1.3',
+     region           => 'example-west-1',
+   }
+
+     }
+
+}
+
+
+
+

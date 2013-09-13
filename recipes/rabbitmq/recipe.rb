@@ -12,6 +12,7 @@ namespace :rabbitmq do
     modules::install
     transfer
     apply
+    web_stomp_plugin
   end
 
 
@@ -52,6 +53,16 @@ namespace :rabbitmq do
   task :apply, :roles => [:rabbitmq] do
     set :user, "root"
     run "http_proxy='http://proxy:3128' https_proxy='http://proxy:3128' puppet apply /tmp/rabbitmq.pp "
+  end
+
+  task :web_stomp_plugin, :roles =>[:rabbitmq] do
+    set :user, "root"
+    run "wget http://public.rennes.grid5000.fr/~msimonin/web_stomp_plugin/web_stomp_plugin_2.8.2.tar.gz 2>1"
+    run "tar -xvzf web_stomp_plugin_2.8.2.tar.gz"
+    run "cp web_stomp_plugin_2.8.2/* /usr/lib/rabbitmq/lib/rabbitmq_server-2.8.4/plugins/."
+    run "rabbitmq-plugins enable rabbitmq_web_stomp"
+    run "rabbitmq-plugins enable rabbitmq_web_stomp_examples"
+    run "service rabbitmq-server restart"
   end
 
 end

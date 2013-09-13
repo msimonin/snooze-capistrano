@@ -1,5 +1,7 @@
 class { 'cassandra':
-  cluster_name  => "<%= @cassandra_name %>",
-  seeds         => <%= @cassandra_seeds %>,
-  repo_pin      => false
+  package_name => "cassandra",
+  version      => "1.2.9",
+  cluster_name => "<%= @cassandra_name %>",
+  seeds        => <%= @cassandra_seeds %>,
+  repo_pin     => false
 }

@@ -33,10 +33,12 @@ namespace :snooze do
       if ls!=""
         run "mv #{snooze_puppet_path} #{snooze_puppet_path}"+Time.now.to_i.to_s 
       end
-      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
-#      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
+#      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
+      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
+      run "https_proxy='http://proxy:3128' wget #{kadeploy3_common_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-common.deb 2>1"
+      run "https_proxy='http://proxy:3128' wget #{kadeploy3_client_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-client.deb 2>1"
     end
 
     task :reprepare, :roles => [:frontend] do
@@ -79,7 +81,7 @@ namespace :snooze do
     task :transfer, :roles => [:frontend] do
       set :user, "#{g5k_user}"
       upload("#{snooze_path}/tmp/bootstrap.pp","#{snooze_puppet_path}/manifests/bootstrap.pp")
-      upload("#{snooze_path}/tmp/groupmanager.pp","#{snooze_puppet_path}/manifests/groupmanager.pp")
+      upload("#{snooze_path}/tmp/groupmanager.pp","#{snooze_puppet_path}/manifests/groupmanager.pp", :via => :scp)
       upload("#{snooze_path}/tmp/localcontroller.pp","#{snooze_puppet_path}/manifests/localcontroller.pp")
     end
 
@@ -219,17 +221,35 @@ namespace :cluster do
 
 
   desc 'Start cluster'
-  task :start, :roles=>[:bootstrap, :groupmanager, :localcontroller] do
+  task :start, :roles => [:bootstrap, :groupmanager, :localcontroller] do
     set :user, "root"
     run "/etc/init.d/snoozenode start" 
   end
 
   desc 'Stop cluster'
-  task :stop, :roles=>[:bootstrap, :groupmanager, :localcontroller] do
+  task :stop, :roles => [:bootstrap, :groupmanager, :localcontroller] do
     set :user, "root"
     run "/etc/init.d/snoozenode stop"
     run "killall kvm 2>1" 
     run "rm /tmp/snooze_*"
+  end
+
+  desc 'Wake Up localcontrollers'
+  task :wakeup, :roles => [:frontend] do
+    set :user, "#{g5k_user}"
+    localcontrollers = find_servers :roles => :localcontroller
+    localcontrollers.each do |localcontroller|
+      run "kapower3 -m #{localcontroller} --on"
+    end
+  end
+
+  desc 'Power down localcontrollers'
+  task :shutdown, :roles => [:frontend] do
+    set :user, "#{g5k_user}"
+    localcontrollers = find_servers :roles => :localcontroller
+    localcontrollers.each do |localcontroller|
+      run "kapower3 -m #{localcontroller} --off"
+    end
   end
 
   # Dummy vm management ...

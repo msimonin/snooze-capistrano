@@ -8,5 +8,5 @@ iface lo inet loopback
 auto virbr0
 iface virbr0 inet dhcp
     bridge_ports eth0
-    bridge_stp on
+    bridge_stp off
     bridge_maxwait 0
