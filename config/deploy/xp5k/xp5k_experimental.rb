@@ -6,60 +6,38 @@ load 'config/deploy.rb'
 
 XP5K::Config.load
 
-$myxp = XP5K::XPM.new(:logger => logger)
+$myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
-  :resources  => ["nodes=1, walltime=#{walltime}"],
-  :sites      => %w( rennes ),
+  :resources  => ["nodes=12, walltime=#{walltime}"],
+  :site      => "#{site}",
   :types      => ["deploy"],
-  :name       => "bootstrap",
+  :name       => "snooze",
+  :roles      => [
+    XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
+    XP5K::Role.new({ :name => 'groupmanager', :size => 2 }),
+    XP5K::Role.new({ :name => 'localcontroller', :size => 5 }),
+    XP5K::Role.new({ :name => 'cassandra', :size => 4 }),
+#    XP5K::Role.new({ :name => 'dfs', :size => 4 }),
+  ],
   :command    => "sleep 86400"
 })
 
 $myxp.define_job({
-  :resources  =>["nodes=3, walltime=#{walltime}"],
-  :sites      => %w( rennes ) ,
-  :types      => ["deploy"],
-  :name       => "groupmanager",
-  :command    => "sleep 86400"
-})
-
-$myxp.define_job({
-  :resources  => ["nodes=4, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
-  :types      => ["deploy"],
-  :name       => "localcontroller",
-  :command    => "sleep 86400"
-})
-
-$myxp.define_job({
-  :resources  => ["nodes=4, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
-  :types      => ["deploy"],
-  :name       => "cassandra",
-  :command    => "sleep 86400"
-})
-=begin
-$myxp.define_job({
-  :resources  => ["nodes=3, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
-  :types      => ["deploy"],
-  :name       => "dfs_data",
-  :command    => "sleep 86400"
-})
-=end
-
-$myxp.define_job({
-  :resources  => ["#{subnet}=1, walltime=#{walltime}"],
-  :sites       => %w( rennes ),
+  :resources  => ["slash_18=1, walltime=#{walltime}"],
+  :site       => "#{site}",
   :name       => "subnet",
   :command    => "sleep 86400"
 })
 
 $myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
-  :jobs           => %w{bootstrap groupmanager localcontroller cassandra},
+  :site           => "#{site}",
+  :jobs           => %w{},
+  :roles          => %w{ bootstrap groupmanager localcontroller cassandra},
+  :retry          => true,
   :key            => File.read("#{ssh_public}"), 
 })
 
 load "config/deploy/xp5k/xp5k_common_tasks.rb"
+load "config/deploy/xp5k/xp5k_common_roles.rb"

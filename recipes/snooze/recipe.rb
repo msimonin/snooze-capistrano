@@ -1,5 +1,6 @@
 set :snooze_path, "#{recipes_path}/snooze"
 set :snooze_puppet_path, "/home/#{g5k_user}/snooze-puppet"
+set :snooze_puppet_repo_url, "https://github.com/msimonin/snooze-puppet.git"
 
 load "#{snooze_path}/roles.rb"
 load "#{snooze_path}/output.rb"
@@ -11,7 +12,26 @@ namespace :snooze do
     prepare::default
     provision::default
     cluster::default
+    plugins::default
   end
+
+  namespace :plugins do
+    desc 'Install plugins' 
+    task :default do
+      install
+    end
+
+    task :install, :roles => [:all] do
+      set :user, "root"
+      $plugins.each do |plugin|
+        url = plugin[:url]
+        destination = plugin[:destination]
+        run "mkdir -p #{destination}"
+        run "https_proxy='http://proxy:3128' wget -P #{destination} #{url} 2>1"
+      end
+    end
+
+  end # namespace plugins
 
   namespace :prepare do  
     desc 'prepare the nodes'
@@ -33,8 +53,8 @@ namespace :snooze do
       if ls!=""
         run "mv #{snooze_puppet_path} #{snooze_puppet_path}"+Time.now.to_i.to_s 
       end
-#      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
-      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
+      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
+      #upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{kadeploy3_common_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-common.deb 2>1"
@@ -53,6 +73,8 @@ namespace :snooze do
       run "dpkg --purge snoozeclient 2>1"
     end
   end
+
+ 
 
   namespace :provision do
     
@@ -104,9 +126,9 @@ namespace :snooze do
       template = File.read("#{snooze_path}/templates/snoozenode.erb")
       renderer = ERB.new(template)
       @nodeType             = "groupmanager"
-      @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
-      @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
-      @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first 
+      @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap").first
+      @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap").first
+      @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap").first 
       generate = renderer.result(binding)
       myFile = File.open("#{snooze_path}/tmp/groupmanager.pp", "w")
       myFile.write(generate)
@@ -118,9 +140,9 @@ namespace :snooze do
       template = File.read("#{snooze_path}/templates/snoozenode.erb")
       renderer = ERB.new(template)
       @nodeType             = "localcontroller"
-      @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
-      @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first
-      @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap", kavlan="#{vlan}").first 
+      @zookeeperHosts       = $myxp.get_deployed_nodes("bootstrap").first
+      @zookeeperdHosts      = $myxp.get_deployed_nodes("bootstrap").first
+      @externalNotificationHost = $myxp.get_deployed_nodes("bootstrap").first 
       generate = renderer.result(binding)
       myFile = File.open("#{snooze_path}/tmp/localcontroller.pp", "w")
       myFile.write(generate)
@@ -134,9 +156,9 @@ namespace :snooze do
         session.when "in?(:groupmanager)", "puppet apply #{snooze_puppet_path}/manifests/groupmanager.pp --modulepath=#{snooze_puppet_path}/modules/"
         session.when "in?(:localcontroller)", "puppet apply #{snooze_puppet_path}/manifests/localcontroller.pp --modulepath=#{snooze_puppet_path}/modules/"
       end
-    end 
-end
-
+    end
+  end
+  
 # Cluster configuration
 namespace :cluster do
 

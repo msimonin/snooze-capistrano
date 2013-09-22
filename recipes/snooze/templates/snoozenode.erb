@@ -17,10 +17,12 @@ class {
     databaseCassandraHosts               => <%= @databaseCassandraHosts %>,
     migrationMethod                      => "forceunsafe",
     migrationTimeout                     => 60,
+    groupManagerSchedulerPluginsDirectory=> "/usr/share/snoozenode/plugins/groupManagerScheduler",
+    placementPolicy                      => "RandomScheduling",
     reconfigurationEnabled               => true,
     reconfigurationPolicy                => "Sercon",
     reconfigurationInterval              => "0 0/1 *  * * ?",
-    energyManagementEnabled              => true,
+    energyManagementEnabled              => false,
     energyManagementIdleTime             => 30,
     energyManagementPowerSavingAction    => "suspendToRam",
     energyManagementThresholdsWakeupTime => 60 

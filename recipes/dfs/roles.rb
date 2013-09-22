@@ -1,5 +1,5 @@
 def dfs_master
-  $myxp.get_deployed_nodes('dfs_data', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('dfs_data').first
 end
 
 def dfs_type()
@@ -11,11 +11,11 @@ def dfs_volume()
 end
 
 def data_nodes()
-  $myxp.get_deployed_nodes('dfs_data', kavlan="#{vlan}")
+  $myxp.get_deployed_nodes('dfs_data')
 end
 
 def client_nodes()
-  $myxp.get_deployed_nodes('localcontroller', kavlan="#{vlan}")  +  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}")
+  $myxp.get_deployed_nodes('localcontroller')  +  $myxp.get_deployed_nodes('bootstrap')
 end
 
 def dfs_local()

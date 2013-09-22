@@ -96,6 +96,7 @@ class openstack::keystone (
   }
 }
 
+=begin
 class { 'openstack::glance':
 }
 
@@ -153,7 +154,8 @@ class openstack::glance(
     internal_address => $internal_address,
     region           => $region,
     }
-}
+    }
+=end
 
 
    

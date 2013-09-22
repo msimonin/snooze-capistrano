@@ -5,7 +5,7 @@ set :stages, %w(master maint1.0.0 testing experimental sandbox)
 set :default_stage, "master"
 
 # Enable pretty output. Remove it if you want full logging
-logger.level = Logger::IMPORTANT
+# logger.level = Logger::IMPORTANT
 STDOUT.sync
 
 
@@ -23,10 +23,7 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 # relative to the capfile
 set :recipes_path, "./recipes"
 
-set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "5:00:00"
-# snooze options
-set :nb_bootstraps, ENV['bootstraps'] || "1"
-set :nb_groupmanagers, ENV['groupmanagers'] || "2"
-set :nb_localcontrollers, ENV['localcontrollers'] || "2"
+set :site, ENV['site'] || XP5K::Config[:site] || "lille"
+set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "2:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"

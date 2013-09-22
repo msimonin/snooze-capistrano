@@ -1,13 +1,13 @@
 role :nfs_server do
-  $myxp.get_deployed_nodes('bootstrap', kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap').first
 end
 
 role :nfs_slave do
-  $myxp.get_deployed_nodes('localcontroller', kavlan="#{vlan}")
+  $myxp.get_deployed_nodes('localcontroller')
 end
 
 def host
-  $myxp.get_deployed_nodes('bootstrap',kavlan="#{vlan}").first
+  $myxp.get_deployed_nodes('bootstrap').first
 end
 
 def nfs_shared
