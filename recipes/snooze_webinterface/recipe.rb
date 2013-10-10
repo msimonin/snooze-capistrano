@@ -40,7 +40,7 @@ namespace :snooze_webinterface do
     
     desc 'Install the web interface'
     task :default do
-      install:default
+      install::default
       launch
     end
 

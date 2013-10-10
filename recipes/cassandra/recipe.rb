@@ -29,6 +29,7 @@ namespace :cassandra do
 
   task :puppet, :roles => [:cassandra] do
     set :user, "root"
+    run "apt-get update 2>/dev/null"
     run "apt-get install -y puppet 2>/dev/null"
   end
 

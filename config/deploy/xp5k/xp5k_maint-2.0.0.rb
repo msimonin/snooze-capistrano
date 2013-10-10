@@ -24,7 +24,7 @@ $myxp.define_job({
 })
 
 $myxp.define_job({
-  :resources  => ["slash_18=1, walltime=#{walltime}"],
+  :resources  => ["slash_22=1, walltime=#{walltime}"],
   :site       => "#{site}",
   :name       => "subnet",
   :command    => "sleep 86400"

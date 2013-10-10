@@ -10,7 +10,7 @@ $myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
   :resources  => ["nodes=#{ENV["nodes"] || 1}, walltime=#{walltime}"],
-  :site       => "sophia",
+  :site       => "#{site}",
   :retry      => true,
   :goal       => "100%",
   :types      => ["deploy"],
@@ -19,7 +19,7 @@ $myxp.define_job({
 })
 
 $myxp.define_deployment({
-  :site           => "sophia",
+  :site           => "#{site}",
   :environment    => "wheezy-x64-nfs",
   :jobs           => [ENV["recipe"] || "sandbox" ],
   :key            => File.read("#{ssh_public}"), 

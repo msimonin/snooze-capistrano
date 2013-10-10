@@ -30,6 +30,7 @@ namespace :nfs do
 
   task :puppet, :roles => [:nfs_server, :nfs_slave] do
     set :user, "root"
+    run "apt-get update 2>/dev/null"
     run "apt-get install -y puppet 2>/dev/null"
   end
 
