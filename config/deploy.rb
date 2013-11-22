@@ -1,7 +1,7 @@
 require 'capistrano/ext/multistage'
 
 # Stages definition
-set :stages, %w(master maint1.0.0 maint2.0.0 testing sandbox)
+set :stages, %w(master maint1.0.0 maint2.0.0 testing sandbox experimental)
 set :default_stage, "master"
 
 # Enable pretty output. Remove it if you want full logging
@@ -24,6 +24,6 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 set :recipes_path, "./recipes"
 
 set :site, ENV['site'] || XP5K::Config[:site] || "rennes"
-set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "6:00:00"
+set :walltime, ENV['walltime'] || XP5K::Config[:walltime] || "3:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"

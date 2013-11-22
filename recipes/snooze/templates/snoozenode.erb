@@ -18,7 +18,9 @@ class {
     migrationMethod                      => "forceunsafe",
     migrationTimeout                     => 60,
     groupManagerSchedulerPluginsDirectory=> "/usr/share/snoozenode/plugins/groupManagerScheduler",
-    placementPolicy                      => "RandomScheduling",
+    placementPolicy                      => "RoundRobin",
+    imageRepositorySource                => "/var/lib/libvirt/snoozeimages",
+    imageRepositoryDestination           => "/var/lib/libvirt/snoozeimages",
     reconfigurationEnabled               => true,
     reconfigurationPolicy                => "Sercon",
     reconfigurationInterval              => "0 0/1 *  * * ?",
@@ -31,13 +33,16 @@ class {
 
 
 <% if @nodeType == "bootstrap" %>
+  include "snoozeimages"
+  include "snoozeec2"
 <%=
   "
   class { 
-	    'zookeeper::zookeeperd': 
-       zookeeperHosts            => [\"" + @zookeeperdHosts + "\"],
+     'zookeeper::zookeeperd': 
+      zookeeperHosts            => [\"" + @zookeeperdHosts + "\"],
   }
 "
 %>
+
 <%  end %>
 

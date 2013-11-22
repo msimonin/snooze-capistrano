@@ -14,11 +14,12 @@ class nfs ( $nfshost="",
     ensure  => "mounted",
     options => "$options",
     atboot  => true,
-    require => [Package['nfs-common'],File["$local"]]
+    require => [Package['nfs-common'],Exec["$local"]]
   }
 
-  file { $local:
-    ensure => directory
+  exec { $local:
+    command => "mkdir -p $local",
+    path    => ["/bin"]
   }
 
   file_line { "exit0":

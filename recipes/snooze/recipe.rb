@@ -57,6 +57,8 @@ namespace :snooze do
       #upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
+      run "https_proxy='http://proxy:3128' wget #{snoozeimages_deb_url} -O #{snooze_puppet_path}/modules/snoozeimages/files/snoozeimages.deb 2>1"
+      run "https_proxy='http://proxy:3128' wget #{snoozeec2_deb_url} -O #{snooze_puppet_path}/modules/snoozeec2/files/snoozeec2.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{kadeploy3_common_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-common.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{kadeploy3_client_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-client.deb 2>1"
     end
@@ -171,6 +173,12 @@ namespace :cluster do
     context
     transfer
     fix_permissions
+    
+    if ("#{branch}" == "experimental")
+      default_pool
+      local_pool
+    end
+
   end
 
 
@@ -241,19 +249,38 @@ namespace :cluster do
     run "chown -R snoozeadmin:snooze /tmp/snooze"
   end
 
+  task 'default_pool', :roles => [:first_bootstrap] do
+    set :user, "root"
+    run "virsh  pool-define-as --name default --type dir --target /tmp/snooze/images"
+    run "virsh  pool-start default"
+    run "virsh  pool-refresh default"
+    run "virsh  pool-autostart default"
+  end
+
+  task 'local_pool', :roles => [:localcontroller] do
+    set :user, "root"
+    run "chown root:snooze /var/lib/libvirt/images"
+    run "chmod 775 /var/lib/libvirt/images"
+  end
 
   desc 'Start cluster'
   task :start, :roles => [:bootstrap, :groupmanager, :localcontroller] do
     set :user, "root"
-    run "/etc/init.d/snoozenode start" 
+      parallel do |session|
+        session.when "in?(:bootstrap)", "/etc/init.d/snoozenode start ; /etc/init.d/snoozeimages start; /etc/init.d/snoozeec2 start"
+        session.when "in?(:localcontroller)", "/etc/init.d/snoozenode start"
+        session.when "in?(:groupmanager)", "/etc/init.d/snoozenode start"
+      end
   end
 
   desc 'Stop cluster'
   task :stop, :roles => [:bootstrap, :groupmanager, :localcontroller] do
     set :user, "root"
-    run "/etc/init.d/snoozenode stop"
-    run "killall kvm 2>1" 
-    run "rm /tmp/snooze_*"
+      parallel do |session|
+        session.when "in?(:bootstrap)", "/etc/init.d/snoozenode stop ; /etc/init.d/snoozeimages stop; /etc/init.d/snoozeec2 stop; rm /tmp/snooze_*"
+        session.when "in?(:groupmanager)", "/etc/init.d/snoozenode stop ; rm /tmp/snooze_* "
+        session.when "in?(:localcontroller)", "/etc/init.d/snoozenode stop ; killall kvm 2>1 ; rm /tmp/snooze_*"
+      end
   end
 
   desc 'Wake Up localcontrollers'
