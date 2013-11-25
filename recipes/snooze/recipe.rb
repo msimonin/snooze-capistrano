@@ -117,7 +117,7 @@ namespace :snooze do
       @zookeeperHosts       = "#{zookeeperHosts}"
       @zookeeperdHosts      = "#{zookeeperdHosts}"
       @externalNotificationHost = "#{rabbitmqServer}"
-      @databaseCassandraHosts = "#{cassandraHosts}"
+      @databaseCassandraHosts = cassandraHosts ? "#{cassandraHosts}" : "localhost"
       generate = renderer.result(binding)
       myFile = File.open("#{snooze_path}/tmp/bootstrap.pp", "w")
       myFile.write(generate)
