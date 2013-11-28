@@ -235,7 +235,7 @@ namespace :cluster do
   end
 
   task :context  do
-    system "genisoimage -RJ -o #{snooze_path}/tmp/context.iso #{snooze_path}/network/context 2>/dev/null"
+    system "#{mkisotool} #{snooze_path}/tmp/context.iso #{snooze_path}/network/context 2>/dev/null"
   end
 
   task :transfer, :roles =>[:first_bootstrap] do

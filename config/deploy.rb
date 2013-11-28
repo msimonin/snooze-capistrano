@@ -24,6 +24,11 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 set :recipes_path, "./recipes"
 
 set :site, ENV['site'] || "rennes"
-set :walltime, ENV['walltime'] || "3:00:00"
+set :walltime, ENV['walltime'] || "1:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"
+
+set :mkisotool, "genisoimage -RJ -o"
+# mac
+# set :mkisotool, "hdiutil makehybrid -joliet -iso -o "
+

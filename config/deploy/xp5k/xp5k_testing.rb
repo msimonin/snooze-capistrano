@@ -16,8 +16,8 @@ $myxp.define_job({
   :roles      => [
     XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
     XP5K::Role.new({ :name => 'groupmanager', :size => 2 }),
-    XP5K::Role.new({ :name => 'localcontroller', :size => 3 }),
-    XP5K::Role.new({ :name => 'cassandra', :size => 4 }),
+    XP5K::Role.new({ :name => 'localcontroller', :size => 1 }),
+    XP5K::Role.new({ :name => 'cassandra', :size => 1 }),
 #    XP5K::Role.new({ :name => 'dfs', :size => 4 }),
   ],
   :command    => "sleep 86400"
