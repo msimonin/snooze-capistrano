@@ -205,6 +205,7 @@ namespace :cluster do
       ls = capture("ls /tmp/snooze/images/debian-hadoop-context-big.qcow2 &2>&1")
       if ls==""
         run "https_proxy='http://proxy:3128' wget -O /tmp/snooze/images/debian-hadoop-context-big.qcow2 http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 2>1"
+        run "https_proxy='http://proxy:3128' wget -O /tmp/snooze/images/resilin-base.raw http://public.rennes.grid5000.fr/~msimonin/resilin-base.raw 2>1"
       end
   end
   

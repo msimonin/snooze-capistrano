@@ -24,7 +24,7 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 set :recipes_path, "./recipes"
 
 set :site, ENV['site'] || "rennes"
-set :walltime, ENV['walltime'] || "1:00:00"
+set :walltime, ENV['walltime'] || "5:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"
 
