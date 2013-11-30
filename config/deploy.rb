@@ -23,8 +23,8 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 # relative to the capfile
 set :recipes_path, "./recipes"
 
-set :site, ENV['site'] || "rennes"
-set :walltime, ENV['walltime'] || "5:00:00"
+set :site, ENV['site'] || "nancy"
+set :walltime, ENV['walltime'] || "3:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"
 
