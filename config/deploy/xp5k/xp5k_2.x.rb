@@ -9,14 +9,14 @@ XP5K::Config.load
 $myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
-  :resources  => ["nodes=5, walltime=#{walltime}"],
+  :resources  => ["nodes=7, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
   :name       => "snooze",
   :roles      => [
     XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
     XP5K::Role.new({ :name => 'groupmanager', :size => 2 }),
-    XP5K::Role.new({ :name => 'localcontroller', :size => 1 }),
+    XP5K::Role.new({ :name => 'localcontroller', :size => 3 }),
     XP5K::Role.new({ :name => 'cassandra', :size => 1 }),
 #    XP5K::Role.new({ :name => 'dfs', :size => 4 }),
   ],

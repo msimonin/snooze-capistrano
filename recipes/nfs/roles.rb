@@ -11,19 +11,11 @@ def host
 end
 
 def nfs_shared
-  if "#{branch}" == "experimental"
-    "/tmp/snooze/images"
-  else
     "/tmp/snooze"
-  end
 end
 
 def nfs_local
-  if "#{branch}" == "experimental"
-    "/var/lib/libvirt/snoozeimages"
-  else 
     "/tmp/snooze"
-  end
 end
 
 def uid

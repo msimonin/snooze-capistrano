@@ -15,8 +15,9 @@ class nfs::server ($shared="", $uid="root", $gid="root") {
   file {
     "$shared":
     ensure => directory,
-    owner => $uid,
-    group => $gid,
+    owner  => $uid,
+    group  => $gid,
+    mode   => 755
   }
 
 

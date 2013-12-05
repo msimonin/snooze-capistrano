@@ -1,6 +1,11 @@
 set :snooze_path, "#{recipes_path}/snooze"
 set :snooze_puppet_path, "/home/#{g5k_user}/snooze-puppet"
 set :snooze_puppet_repo_url, "https://github.com/msimonin/snooze-puppet.git"
+set :snooze_experiments_repo_url, "https://github.com/snoozesoftware/snooze-experiments"
+set :snooze_imagesrepository_local_path, "/tmp/snooze/images"
+set :mkisotool, "genisoimage -RJ -o"
+# mac
+# set :mkisotool, "hdiutil makehybrid -joliet -iso -o "
 
 load "#{snooze_path}/roles.rb"
 load "#{snooze_path}/output.rb"
@@ -53,8 +58,8 @@ namespace :snooze do
       if ls!=""
         run "mv #{snooze_puppet_path} #{snooze_puppet_path}"+Time.now.to_i.to_s 
       end
-      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
-      #upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
+#      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
+      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeimages_deb_url} -O #{snooze_puppet_path}/modules/snoozeimages/files/snoozeimages.deb 2>1"
@@ -174,10 +179,8 @@ namespace :cluster do
     transfer
     fix_permissions
     
-    if ("#{branch}" == "experimental")
-      default_pool
-      local_pool
-    end
+#    default_pool
+#    local_pool
 
   end
 
@@ -202,11 +205,21 @@ namespace :cluster do
   task :copy, :roles=>[:first_bootstrap] do
     set :user, "root"
     run "mkdir -p /tmp/snooze/images"
-      ls = capture("ls /tmp/snooze/images/debian-hadoop-context-big.qcow2 &2>&1")
+
+      ls = capture("ls #{snooze_imagesrepository_local_path}/debian-hadoop-context-big.qcow2 &2>&1")
       if ls==""
-        run "https_proxy='http://proxy:3128' wget -O /tmp/snooze/images/debian-hadoop-context-big.qcow2 http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 2>1"
-        run "https_proxy='http://proxy:3128' wget -O /tmp/snooze/images/resilin-base.raw http://public.rennes.grid5000.fr/~msimonin/resilin-base.raw 2>1"
+        run "https_proxy='http://proxy:3128' wget -O \
+        #{snooze_imagesrepository_local_path}/debian-hadoop-context-big.qcow2 \
+        http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 2>1"
       end
+
+      ls = capture("ls #{snooze_imagesrepository_local_path}/resilin-base.raw &2>&1")
+      if ls==""
+        run "https_proxy='http://proxy:3128' wget -O \
+        #{snooze_imagesrepository_local_path}/resilin-base.raw \
+        http://public.rennes.grid5000.fr/~msimonin/resilin-base.raw 2>1"
+      end
+
   end
   
   task :interfaces, :roles=>[:subnet] do
@@ -242,14 +255,16 @@ namespace :cluster do
   task :transfer, :roles =>[:first_bootstrap] do
      set :user, "root"
      run "mkdir -p /tmp/snooze/images"
-     upload "#{snooze_path}/tmp/context.iso", "/tmp/snooze/images/.", :via => :scp
+     upload "#{snooze_path}/tmp/context.iso", "#{snooze_imagesrepository_local_path}/.", :via => :scp
   end
   
   task 'fix_permissions', :roles => [:first_bootstrap] do
     set :user, "root"
     run "chown -R snoozeadmin:snooze /tmp/snooze"
+    run "chmod -R 755 #{snooze_imagesrepository_local_path}"
   end
 
+=begin
   task 'default_pool', :roles => [:first_bootstrap] do
     set :user, "root"
     run "virsh  pool-define-as --name default --type dir --target /tmp/snooze/images"
@@ -257,12 +272,15 @@ namespace :cluster do
     run "virsh  pool-refresh default"
     run "virsh  pool-autostart default"
   end
+=end
 
+=begin
   task 'local_pool', :roles => [:localcontroller] do
     set :user, "root"
     run "chown root:snooze /var/lib/libvirt/images"
     run "chmod 775 /var/lib/libvirt/images"
   end
+=end
 
   desc 'Start cluster'
   task :start, :roles => [:bootstrap, :groupmanager, :localcontroller] do

@@ -21,7 +21,7 @@ class {
     numberOfEntriesPerVirtualMachine     => 300,
     groupManagerSchedulerPluginsDirectory=> "/usr/share/snoozenode/plugins/groupManagerScheduler",
     placementPolicy                      => "RoundRobin",
-    imageRepositorySource                => "/var/lib/libvirt/snoozeimages",
+    imageRepositorySource                => "/tmp/snooze/images",
     imageRepositoryDestination           => "/tmp/images",
     reconfigurationEnabled               => false,
     reconfigurationPolicy                => "Sercon",
@@ -35,8 +35,17 @@ class {
 
 
 <% if @nodeType == "bootstrap" %>
-  include "snoozeimages"
-  include "snoozeec2"
+
+  class { 'snoozeimages':
+    listenPort => 4000
+  }
+
+  class { 'snoozeec2':
+    listenPort          => 4001,
+    imageRepositoryPort => 400
+    }
+
+    Class['snoozenode'] -> Class['snoozeimages']
 <%=
   "
   class { 
