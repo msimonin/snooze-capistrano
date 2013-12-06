@@ -3,9 +3,6 @@ set :snooze_puppet_path, "/home/#{g5k_user}/snooze-puppet"
 set :snooze_puppet_repo_url, "https://github.com/msimonin/snooze-puppet.git"
 set :snooze_experiments_repo_url, "https://github.com/snoozesoftware/snooze-experiments"
 set :snooze_imagesrepository_local_path, "/tmp/snooze/images"
-set :mkisotool, "genisoimage -RJ -o"
-# mac
-# set :mkisotool, "hdiutil makehybrid -joliet -iso -o "
 
 load "#{snooze_path}/roles.rb"
 load "#{snooze_path}/output.rb"

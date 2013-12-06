@@ -1,3 +1,4 @@
+# Used to deploy snooze v2.1.0
 set :branch, "v2.1.0"
 set :snoozenode_deb_url, "https://github.com/snoozesoftware/snoozenode/releases/download/snoozenode-2.1.0/snoozenode_2.1.0-0_all.deb"
 set :snoozeclient_deb_url, "https://ci.inria.fr/snooze-software/job/testing-snoozeclient/ws/distributions/deb-package/snoozeclient_2.0.0-0_all.deb"

@@ -1,3 +1,5 @@
+# apply a custom recipe (read from the environment variable recipe)
+
 load 'config/deploy/xp5k/xp5k_sandbox.rb'
 
 # load recipes

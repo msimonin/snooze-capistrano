@@ -1,7 +1,7 @@
 require 'capistrano/ext/multistage'
 
 # Stages definition
-set :stages, %w(master v2.1.0 maint1.0.0 maint2.0.0 sandbox experimental)
+set :stages, %w(master v2.1.0 experimental sandbox)
 set :default_stage, "v2.1.0"
 
 # Enable pretty output. Remove it if you want full logging
@@ -20,8 +20,14 @@ set :recipes_path, "./recipes"
 
 # G5K global parameters
 set :site, ENV['site'] || "rennes"
-set :walltime, ENV['walltime'] || "3:00:00"
+set :walltime, ENV['walltime'] || "1:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"
 # For nodes reservation, see config/deploy/xp5k
+
+# Generation of the iso file.
+set :mkisotool, "genisoimage -RJ -o"
+# mac
+# set :mkisotool, "hdiutil makehybrid -joliet -iso -o "
+
 
