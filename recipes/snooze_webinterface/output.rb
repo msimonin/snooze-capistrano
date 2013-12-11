@@ -1,80 +1,56 @@
 checkmark = "\u2713"
 prefixend = "\u2514"
 prefix = "\u251C"
+prefixl1 = "*"
+firstchildmark = " #{prefixl1} ".bold.blue
 childmarkend = " #{prefixend} ".bold.blue
 childmark = " #{prefix} ".blue.bold
 checkmark = "#{checkmark}".green
 
 before "snooze_webinterface" do
-  puts "Installing RabbitMQ server".bold.blue
+  puts "Installing Snoozewebinterface".bold.blue
 end
 
-before "snooze_webinterface:puppet" do
-  print " #{childmark}"
-  print "Installing puppet........................"
+before "snooze_webinterface:install:packages" do
+  print "   #{childmark}"
+  print "Installing packages......................"
   start_spinner()
 end
 
-after "snooze_webinterface:puppet" do
+after "snooze_webinterface:install:packages" do
   stop_spinner()
   puts "#{checkmark}"
 end
 
-before "snooze_webinterface:generate" do
-  print " #{childmark}"
-  print "Generating rabbbitmq recipe.............."
-end
-
-after "snooze_webinterface:generate" do
-  puts "#{checkmark}"
-end
-
-before "snooze_webinterface:modules:install" do
-  print " #{childmark}"
-  print "Installing rabbbitmq module.............."
-end
-
-after "snooze_webinterface:modules:install" do
-  puts "#{checkmark}"
-end
-
-before "snooze_webinterface:transfer" do
-  print " #{childmark}"
-  print "Transfering rabbbitmq recipe............."
-end
-
-after "snooze_webinterface:transfer" do
-  puts "#{checkmark}"
-end
-
-before "snooze_webinterface:modules:uninstall" do
-  print " #{childmark}"
-  print "Uninstalling rabbbitmq module............"
-end
-
-
-after "snooze_webinterface:modules:uninstall" do
-  puts "#{checkmark}"
-end
-
-before "snooze_webinterface:apply" do
-  print " #{childmarkend}"
-  print "Installing / configuring rabbbitmq......."
+before "snooze_webinterface:install:files" do
+  print "   #{childmark}"
+  print "Installing snoozeweb files..............."
   start_spinner()
 end
 
-after "snooze_webinterface:apply" do
+after "snooze_webinterface:install:files" do
   stop_spinner()
   puts "#{checkmark}"
 end
 
-before "snooze_webinterface:web_stomp_plugin" do
-  print " #{childmarkend}"
-  print "Installing / configuring rabbbitmq......."
+before "snooze_webinterface:install:bundle" do
+  print "   #{childmark}"
+  print "Installing gems........................."
   start_spinner()
 end
 
-after "snooze_webinterface:web_stomp_plugin" do
+after "snooze_webinterface:install:gems" do
+  stop_spinner()
+  puts "#{checkmark}"
+end
+
+before "snooze_webinterface:launch" do
+  print "   #{childmark}"
+  print "Launching..............................."
+  start_spinner()
+end
+
+after "snooze_webinterface:launch" do
   stop_spinner()
   puts "#{checkmark}"
 end
