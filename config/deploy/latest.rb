@@ -1,9 +1,10 @@
-# Used to deploy snooze v2.1.0
-set :branch, "v2.1.0"
-set :snoozenode_deb_url, "https://github.com/snoozesoftware/snoozenode/releases/download/snoozenode-2.1.0/snoozenode_2.1.0-0_all.deb"
+# Used to deploy snooze the latest release
+set :branch, "lateststable"
+set :snoozenode_deb_url, "https://github.com/snoozesoftware/snoozenode/releases/download/snoozenode-2.1.1/snoozenode_2.1.1-0_all.deb"
+# Unused since 2.1.0
 set :snoozeclient_deb_url, "https://ci.inria.fr/snooze-software/job/testing-snoozeclient/ws/distributions/deb-package/snoozeclient_2.0.0-0_all.deb"
-set :snoozeimages_deb_url, "https://github.com/snoozesoftware/snoozeimages/releases/download/snoozeimages-2.1.0/snoozeimages_2.1.0-0_all.deb"
-set :snoozeec2_deb_url, "https://github.com/snoozesoftware/snoozeec2/releases/download/snoozeec2-2.1.0/snoozeec2_2.1.0-0_all.deb"
+set :snoozeimages_deb_url, "https://github.com/snoozesoftware/snoozeimages/releases/download/snoozeimages-2.1.1/snoozeimages_2.1.1-0_all.deb"
+set :snoozeec2_deb_url, "https://github.com/snoozesoftware/snoozeec2/releases/download/snoozeec2-2.1.1/snoozeec2_2.1.1-0_all.deb"
 
 
 set :kadeploy3_common_deb_url, "https://gforge.inria.fr/frs/download.php/32874/kadeploy-common-3.1.7.2.deb"

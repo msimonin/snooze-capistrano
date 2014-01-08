@@ -17,11 +17,11 @@ $plugins << {
 }
 =end
 
-load 'config/deploy/xp5k/xp5k_testing.rb'
+load 'config/deploy/xp5k/xp5k_2.x.rb'
 
 # load recipes
 # don't forget to change stage to install specific version
-recipes = ["rabbitmq","cassandra", "nfs", "snooze"]
+recipes = ["rabbitmq","cassandra", "nfs", "snooze", "snooze_webinterface"]
 
 recipes.each do |recipe|
   load "#{recipes_path}/#{recipe}/recipe.rb"
@@ -32,4 +32,4 @@ task :automatic do
  puts "Welcome to Snooze deployment".bold.blue
 end
 
-after "automatic", "xp5k", "rabbitmq","cassandra", "snooze", "nfs"
+after "automatic", "xp5k", "rabbitmq","cassandra", "snooze",  "nfs", "snooze:cluster:start", "snooze_webinterface"

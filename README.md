@@ -2,24 +2,19 @@
 
 ## 1. Have a correct ruby environment
 
-This deployment assume ruby 1.9.3 and bundler installed. Check rvm if you need to deal with several ruby environments.
+This deployment assume ruby 1.9.3 (or newer) and bundler installed. Check rvm if you need to deal with several ruby environments.
 Once it's done, you just have to launch :
 
     bundle install
 
 ## 2. Check available tasks
 
-Different tasks are available for the different version of the snooze software.
 
-For the master version of Snooze
+List all the available tasks : 
+```
+cap -T
+```
 
-    cap -T  
-    or
-    cap master -T
-    
-For the testing version, you just have to adapt a little bit : 
-
-    cap testing -T
 
 ## 3. Check the deployment parameters
 
@@ -29,14 +24,21 @@ For the testing version, you just have to adapt a little bit :
 ## 4. Automatic deployment
 
 
-You're now ready to launch the deployment : 
+Install the latest version of snooze cluster and all the dependency : 
 
-    cap [version] automatic
+```
+cap automatic
+```
 
-And to start snooze cluster with : 
+## 5. Customizing the deployment
 
-    cap [version] snooze:cluster:start
-    
+If you need to add custom steps to the deployment, the prefer way is to add  a new  *stage*. They are some predifined stages (master, latest, experimental, sandbox), but feel free to add yours. Adding a new stage won't conflict (too much) when updating the deployment script.
+The following command will launch the task in the stage *yourstage*.
+
+```
+cap yourstage task
+```
+
 
 
  

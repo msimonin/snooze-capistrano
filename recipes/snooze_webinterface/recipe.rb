@@ -12,6 +12,7 @@ namespace :snooze_webinterface do
   task :default do
     install::default  
     launch
+    summary
   end
 
   namespace :install do
@@ -50,6 +51,21 @@ namespace :snooze_webinterface do
     set :user, "root"
     run "cd #{webinterface_directory} ; nohup rackup -p 80 > /tmp/webinterface 2>&1 & "
   end
+
+  task :summary do
+    webui = find_servers :roles => [:snooze_webinterface]
+    host = webui.first.host.split('.').insert(2,'proxy-http').join('.')
+    puts <<-EOF
+      +------------------ Snooze Web Interface -------------+
+                                                          
+       Connect to :                                      
+                                                           
+       https://#{host}
+      +-----------------------------------------------------+
+    EOF
+
+  end
+
 
 end
 
