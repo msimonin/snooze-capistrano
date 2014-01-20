@@ -227,7 +227,7 @@ namespace :cluster do
       @network=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $5}'")
       @broadcast=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $2}'")
       @netmask=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $3}'")
-      @nameserver=capture("g5k-subnets -j "+subnet_id+" -a | head -n 1 | awk '{print $4}'")
+      @nameserver="131.254.203.235"
     else
       kavlan = capture("kavlan -V -j " + $myxp.job_with_name('kavlan')['uid'].to_s)
       b=(kavlan.to_i-10)*4+3
