@@ -1,0 +1,34 @@
+<domain type='kvm'>
+  <name>wheezy5</name>
+  <memory>524288</memory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch="x86_64">hvm</type>
+  </os>
+  <clock offset="localtime"/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>/usr/bin/kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/tmp/wheezy-5.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+     <shareable/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='br0'/>
+      <virtualport type='openvswitch'/>
+      <model type='virtio'/>
+    </interface>
+    <serial type='pty'>
+      <source path='/dev/ttyS0'/>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <source path='/dev/ttyS0'/>
+      <target port='0'/>
+    </console>
+  </devices>
+ </domain>
