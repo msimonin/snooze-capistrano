@@ -6,9 +6,10 @@ $groupManagerHeartbeatPort = 1000+$idfromhost
 class { 
   'snoozenode':
     type                                 => "<%= @nodeType %>",
+    idGenerator                          => "shortname",
     controlDataPort                      => 5000,
     listenAddress                        => $ipaddress,
-    multicastAddress                     => "225.94.95.96",
+    multicastAddress                     => "225.84.95.96",
     httpMaxIoIdleTimeMs                  => "120000",
     groupManagerHeartbeatPort            => $groupManagerHeartbeatPort,
     zookeeperHosts                       => ["<%= @zookeeperHosts %>"],
@@ -31,8 +32,9 @@ class {
     energyManagementEnabled              => false,
     energyManagementIdleTime             => 30,
     energyManagementPowerSavingAction    => "suspendToRam",
-    energyManagementThresholdsWakeupTime => 60 
-
+    energyManagementThresholdsWakeupTime => 60,
+    estimatorStatic                      => false,
+    cpuThresholds                        => "0,0.6,0.6"
 }
 
 
@@ -56,6 +58,11 @@ class {
   }
 "
 %>
-
 <%  end %>
+
+<% if @nodeType == "localcontroller"%>
+  include 'ganglia'
+<%  end %>
+
+
 

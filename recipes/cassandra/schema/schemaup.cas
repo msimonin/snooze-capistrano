@@ -25,6 +25,11 @@ CREATE COLUMN FAMILY virtualmachines_monitorings with
     key_validation_class=UTF8Type
 ;
 
+CREATE COLUMN FAMILY localcontrollers_monitorings with
+    default_validation_class = UTF8Type and
+    key_validation_class = UTF8Type
+;
+
 CREATE COLUMN FAMILY  localcontrollers with
      comparator = UTF8Type and
      default_validation_class = UTF8Type and
