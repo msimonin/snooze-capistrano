@@ -15,7 +15,7 @@ class {
     zookeeperHosts                       => ["<%= @zookeeperHosts %>"],
     virtualMachineSubnet                 => <%= @virtualMachineSubnets %>,
     externalNotificationHost             => "<%= @externalNotificationHost %>",
-    databaseType                         => "cassandra",
+    databaseType                         => "memory",
     databaseCassandraHosts               => <%= @databaseCassandraHosts %>,
     migrationMethod                      => "live",
     migrationTimeout                     => 60,

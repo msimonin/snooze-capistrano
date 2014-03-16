@@ -1,7 +1,7 @@
 require 'capistrano/ext/multistage'
 
 # Stages definition
-set :stages, %w(master latest experimental sandbox)
+set :stages, %w(master latest experimental sandbox serfdom)
 set :default_stage, "latest"
 
 # Enable pretty output. Remove it if you want full logging
@@ -19,8 +19,8 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 set :recipes_path, "./recipes"
 
 # G5K global parameters
-set :site, ENV['site'] || "rennes"
-set :walltime, ENV['walltime'] || "3:00:00"
+set :site, ENV['site'] || "nancy"
+set :walltime, ENV['walltime'] || "1:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"
 # For nodes reservation, see config/deploy/xp5k

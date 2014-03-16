@@ -11,7 +11,8 @@ namespace :serf do
   task :default do
     prepare
     install
-    cluster:start
+    handlers
+    cluster::start
   end
 
   task :prepare, :roles => [:serf] do
@@ -24,6 +25,13 @@ namespace :serf do
     set :user, "root"
     run "wget http://public.rennes.grid5000.fr/~msimonin/serf/serf -O /usr/local/bin/serf" 
     run "chmod 744 /usr/local/bin/serf"
+  end
+
+  task :handlers, :roles => [:serf] do
+    set :user, "root"
+    run "mkdir -p /etc/serf"
+    upload "#{serf_path}/handlers", "/etc/serf", :via => :scp, :recursive => true
+    run "chmod 755 -R /etc/serf"
   end
 
   namespace :cluster do
@@ -41,7 +49,12 @@ namespace :serf do
       bind_port_init = bind_port = 10000
       rpc_port_init = rpc_port =  20000
       pernode.times{ |i|
-        run "nohup serf  agent -node=`hostname`-#{i} -bind=0.0.0.0:#{bind_port} -rpc-addr=0.0.0.0:#{rpc_port} > /tmp/`hostname`-#{i}.log 2>&1 &"
+        run "nohup serf  agent
+        -node=`hostname`-#{i} 
+        -bind=0.0.0.0:#{bind_port} 
+        -rpc-addr=0.0.0.0:#{rpc_port}
+        -event-handler /etc/serf/handlers/router
+        > /tmp/`hostname`-#{i}.log 2>&1 &"
         bind_port = bind_port_init + i
         rpc_port = rpc_port_init + i 
       }
