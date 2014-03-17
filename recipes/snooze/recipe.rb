@@ -55,8 +55,8 @@ namespace :snooze do
       if ls!=""
         run "mv #{snooze_puppet_path} #{snooze_puppet_path}"+Time.now.to_i.to_s 
       end
-#      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
-      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
+      run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
+#      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
       run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
       run "https_proxy='http://proxy:3128' wget #{snoozeimages_deb_url} -O #{snooze_puppet_path}/modules/snoozeimages/files/snoozeimages.deb 2>1"
