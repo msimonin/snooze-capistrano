@@ -1,5 +1,5 @@
 #!/bin/bash
-SERFDIR="/home/msimonin/bin"
+SERFDIR="/etc/serf"
 
 
 if [ "$SERF_EVENT" == "user" ]; then
@@ -10,6 +10,6 @@ else
   EVENT=$SERF_EVENT
 fi
 
-HANDLER="$SERFDIR/serf-handlers/$EVENT"
+HANDLER="$SERFDIR/handlers/$EVENT"
 
 [ -f "$HANDLER" -a -x "$HANDLER" ] && exec "$HANDLER" || :

@@ -9,12 +9,12 @@ XP5K::Config.load
 $myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
-  :resources  => ["nodes=2, walltime=#{walltime}"],
+  :resources  => ["nodes=9, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
   :name       => "[xp5k]serf",
   :roles      => [
-    XP5K::Role.new({ :name => 'serf', :size => 1 }),
+    XP5K::Role.new({ :name => 'serf', :size => 8 }),
     XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
   ],
   :command    => "sleep 86400"

@@ -19,7 +19,7 @@ set :ssh_public,  File.join(ENV["HOME"], ".ssh_insideg5k", "id_rsa.pub")
 set :recipes_path, "./recipes"
 
 # G5K global parameters
-set :site, ENV['site'] || "nancy"
+set :site, ENV['site'] || "grenoble"
 set :walltime, ENV['walltime'] || "1:00:00"
 set :subnet, ENV['subnet'] || "slash_18"
 set :vlan, ENV['vlan'] || "-1"

@@ -11,14 +11,14 @@ namespace :serf do
   task :default do
     prepare
     install
-    handlers
+    handlers::default
     cluster::start
   end
 
   task :prepare, :roles => [:serf] do
     set :user, "root"
     run "apt-get update 2>/dev/null"
-    run "apt-get install -y golang-go 2>/dev/null"
+    run "apt-get install -y golang-go python-pika python-yaml 2>/dev/null"
   end
 
   task :install, :roles => [:serf] do
@@ -27,14 +27,33 @@ namespace :serf do
     run "chmod 744 /usr/local/bin/serf"
   end
 
-  task :handlers, :roles => [:serf] do
-    set :user, "root"
-    run "mkdir -p /etc/serf"
-    upload "#{serf_path}/handlers", "/etc/serf", :via => :scp, :recursive => true
-    run "chmod 755 -R /etc/serf"
-  end
+  namespace :handlers do
 
-  namespace :cluster do
+    task :default do
+      template
+      transfer
+    end
+
+    task :template do
+      rabbitmq_servers = find_servers :roles=>[:rabbitmq]
+      @host = rabbitmq_servers.first
+      template = File.read("#{serf_path}/templates/configuration.yml.erb")
+      renderer = ERB.new(template)
+      generate = renderer.result(binding)
+      myFile = File.open("#{serf_path}/handlers/configuration.yml", "w")
+      myFile.write(generate)
+      myFile.close
+    end
+
+    task :transfer, :roles => [:serf] do
+      set :user, "root"
+      run "mkdir -p /etc/serf"
+      upload "#{serf_path}/handlers", "/etc/serf", :via => :scp, :recursive => true
+      run "chmod 755 -R /etc/serf"
+    end
+  end #namespace handlers
+
+   namespace :cluster do
     
     desc 'Start the serf cluster'    
     task :start do
