@@ -34,7 +34,7 @@ class {
     energyManagementPowerSavingAction    => "suspendToRam",
     energyManagementThresholdsWakeupTime => 60,
     estimatorStatic                      => false,
-    cpuThresholds                        => "0,0.6,0.6"
+    cpuThresholds                        => "0,1,1"
 }
 
 
@@ -60,9 +60,6 @@ class {
 %>
 <%  end %>
 
-<% if @nodeType == "localcontroller"%>
-  include 'ganglia'
-<%  end %>
 
 
 
