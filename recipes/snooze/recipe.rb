@@ -100,6 +100,11 @@ namespace :snooze do
         b=(kavlan.to_i-10)*4+3
         @virtualMachineSubnets = (216..255).step(2).to_a.map{|x| "10."+b.to_s+"."+x.to_s+".1/23"} 
       end
+      @version = "2"
+      if :branch == "experimental"
+        @version = "3"
+      end
+
       bootstrap
       groupmanager
       localcontroller

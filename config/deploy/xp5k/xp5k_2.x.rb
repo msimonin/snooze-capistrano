@@ -9,14 +9,14 @@ XP5K::Config.load
 $myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
-  :resources  => ["{virtual!='none'}nodes=5, walltime=#{walltime}"],
+  :resources  => ["{virtual!='none'}nodes=2, walltime=#{walltime}"],
 #  :resources  => ["{cluster='taurus'}nodes=5, walltime=#{walltime}"],
 #  :resources  => ["nodes=2, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
   :name       => "[xp5k]snooze_compute",
   :roles      => [
-    XP5K::Role.new({ :name => 'localcontroller', :size => 5 }),
+    XP5K::Role.new({ :name => 'localcontroller', :size => 2 }),
   ],
   :command    => "sleep 86400"
 })
