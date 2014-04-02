@@ -74,7 +74,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  capistrano
+  capistrano (< 3.0.0)
   colored
   shell-spinner
   xp5k!
