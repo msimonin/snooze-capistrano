@@ -10,6 +10,7 @@ $myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
   :resources  => ["{virtual!='none'}nodes=2, walltime=#{walltime}"],
+#  :resources  => ["{cluster='taurus'}nodes=5, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
   :name       => "[xp5k]snooze_compute",
@@ -20,15 +21,14 @@ $myxp.define_job({
 })
 
 $myxp.define_job({
-  :resources  => ["nodes=5, walltime=#{walltime}"],
+  :resources  => ["nodes=4, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
   :name       => "[xp5k]snooze_service",
   :roles      => [
     XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
-    XP5K::Role.new({ :name => 'groupmanager', :size => 3 }),
+    XP5K::Role.new({ :name => 'groupmanager', :size => 2 }),
     XP5K::Role.new({ :name => 'cassandra', :size => 1 }),
-#    XP5K::Role.new({ :name => 'dfs', :size => 4 }),
   ],
   :command    => "sleep 86400"
 })

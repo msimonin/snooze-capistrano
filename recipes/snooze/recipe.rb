@@ -6,6 +6,7 @@ set :snooze_imagesrepository_local_path, "/tmp/snooze/images"
 
 load "#{snooze_path}/roles.rb"
 load "#{snooze_path}/output.rb"
+load "#{snooze_path}/config.rb"
 
 namespace :snooze do
  
@@ -14,26 +15,7 @@ namespace :snooze do
     prepare::default
     provision::default
     cluster::default
-    plugins::default
   end
-
-  namespace :plugins do
-    desc 'Install plugins' 
-    task :default do
-      install
-    end
-
-    task :install, :roles => [:all] do
-      set :user, "root"
-      $plugins.each do |plugin|
-        url = plugin[:url]
-        destination = plugin[:destination]
-        run "mkdir -p #{destination}"
-        run "https_proxy='http://proxy:3128' wget -P #{destination} #{url} 2>1"
-      end
-    end
-
-  end # namespace plugins
 
   namespace :prepare do  
     desc 'prepare the nodes'
@@ -100,6 +82,8 @@ namespace :snooze do
         b=(kavlan.to_i-10)*4+3
         @virtualMachineSubnets = (216..255).step(2).to_a.map{|x| "10."+b.to_s+"."+x.to_s+".1/23"} 
       end
+      @version = "#{version}"
+
       bootstrap
       groupmanager
       localcontroller

@@ -9,24 +9,14 @@ XP5K::Config.load
 $myxp = XP5K::XP.new(:logger => logger)
 
 $myxp.define_job({
-  :resources  => ["nodes=12, walltime=#{walltime}"],
+  :resources  => ["nodes=9, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
-  :name       => "snooze",
+  :name       => "[xp5k]serf",
   :roles      => [
+    XP5K::Role.new({ :name => 'serf', :size => 8 }),
     XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
-    XP5K::Role.new({ :name => 'groupmanager', :size => 2 }),
-    XP5K::Role.new({ :name => 'localcontroller', :size => 5 }),
-    XP5K::Role.new({ :name => 'cassandra', :size => 4 }),
-#    XP5K::Role.new({ :name => 'dfs', :size => 4 }),
   ],
-  :command    => "sleep 86400"
-})
-
-$myxp.define_job({
-  :resources  => ["slash_22=1, walltime=#{walltime}"],
-  :site       => "#{site}",
-  :name       => "subnet",
   :command    => "sleep 86400"
 })
 
@@ -34,7 +24,7 @@ $myxp.define_deployment({
   :environment    => "wheezy-x64-nfs",
   :site           => "#{site}",
   :jobs           => %w{},
-  :roles          => %w{ bootstrap groupmanager localcontroller cassandra},
+  :roles          => %w{ bootstrap serf},
   :retry          => true,
   :key            => File.read("#{ssh_public}"), 
 })
