@@ -21,13 +21,13 @@ $myxp.define_job({
 })
 
 $myxp.define_job({
-  :resources  => ["nodes=4, walltime=#{walltime}"],
+  :resources  => ["nodes=5, walltime=#{walltime}"],
   :site      => "#{site}",
   :types      => ["deploy"],
   :name       => "[xp5k]snooze_service",
   :roles      => [
     XP5K::Role.new({ :name => 'bootstrap', :size => 1 }),
-    XP5K::Role.new({ :name => 'groupmanager', :size => 2 }),
+    XP5K::Role.new({ :name => 'groupmanager', :size => 3 }),
     XP5K::Role.new({ :name => 'cassandra', :size => 1 }),
   ],
   :command    => "sleep 86400"

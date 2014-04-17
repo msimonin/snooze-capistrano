@@ -3,37 +3,22 @@ include "snoozeclient"
 
 $groupManagerHeartbeatPort = 1000+$idfromhost
 
+#
+# Specific deployment are automatically generated, 
+# To change other parameters (schedulers ...) go to templates/snooze_node.erb.$version
+#
+
 class { 
 'snoozenode':
     version                              => "<%= @version %>",
     type                                 => "<%= @nodeType %>",
-    idGenerator                          => "shortname",
-    controlDataPort                      => 5000,
-    listenAddress                        => $ipaddress,
-    multicastAddress                     => "225.84.5.6",
-    httpMaxIoIdleTimeMs                  => "120000",
     groupManagerHeartbeatPort            => $groupManagerHeartbeatPort,
     zookeeperHosts                       => ["<%= @zookeeperHosts %>"],
     virtualMachineSubnet                 => <%= @virtualMachineSubnets %>,
     externalNotificationHost             => "<%= @externalNotificationHost %>",
-    databaseType                         => "memory",
     databaseCassandraHosts               => <%= @databaseCassandraHosts %>,
-    migrationMethod                      => "live",
-    migrationTimeout                     => 60,
-    numberOfEntriesPerGroupManager       => 20,
-    numberOfEntriesPerVirtualMachine     => 300,
-    placementPolicy                      => "RoundRobin",
-    imageRepositoryDiskPolicy            => "backing",
     imageRepositorySource                => "/tmp/snooze/images",
     imageRepositoryDestination           => "/tmp/images",
-    reconfigurationEnabled               => false,
-    reconfigurationPolicy                => "Sercon",
-    reconfigurationInterval              => "0 0/1 *  * * ?",
-    energyManagementEnabled              => false,
-    energyManagementIdleTime             => 30,
-    energyManagementPowerSavingAction    => "suspendToRam",
-    energyManagementThresholdsWakeupTime => 60,
-    estimatorStatic                      => false,
 }
 
 

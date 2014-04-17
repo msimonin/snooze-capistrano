@@ -9,8 +9,9 @@ set :snoozeimages_deb_url, "http://snooze.inria.fr/downloads/debian/latest/snooz
 set :snoozeec2_deb_url, "http://snooze.inria.fr/downloads/debian/latest/snoozeec2.deb"
 
 
-set :kadeploy3_common_deb_url, "https://gforge.inria.fr/frs/download.php/32874/kadeploy-common-3.1.7.2.deb"
-set :kadeploy3_client_deb_url, "https://gforge.inria.fr/frs/download.php/32873/kadeploy-client-3.1.7.2.deb"
+
+set :kadeploy3_common_deb_url, "https://gforge.inria.fr/frs/download.php/33023/kadeploy-common-3.1.7.3.deb"
+set :kadeploy3_client_deb_url, "https://gforge.inria.fr/frs/download.php/33022/kadeploy-client-3.1.7.3.deb"
 
 load 'config/deploy/xp5k/xp5k_snooze.rb'
 

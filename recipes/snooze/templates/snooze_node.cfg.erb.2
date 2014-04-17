@@ -1,0 +1,250 @@
+## Specific deployment parameter type, listenAddress are automatically generated
+#
+# You can change the others parameters schedulers / database ...
+
+
+#################### Node #########################
+# Role: bootstrap, groupmanager, or localcontroller)
+node.role = <%= @type %>
+
+# Total network capacity (= Kilobyte)
+node.networkCapacity.Rx = 131072
+node.networkCapacity.Tx = 131072
+
+################ Networking ####################
+## Listen address (default: listen on all interfaces)
+#network.listen.address = <%= @listenAddress %>
+
+## Control
+network.listen.controlDataPort = <%= @controlDataPort %>
+
+## Monitoring
+network.listen.monitoringDataPort = 6000
+
+## Multicast
+network.multicast.address = 225.4.5.6
+network.multicast.groupLeaderHeartbeatPort = 9000
+network.multicast.groupManagerHeartbeatPort = <%= @groupManagerHeartbeatPort %>
+
+# Virtual machine subnet
+network.virtualMachineSubnet = <% @virtualMachineSubnet.each do |subnet| %><%= subnet %>,<% end %> 
+
+################## HTTPd ##########################
+# Maximum amount of threads (pooling)
+httpd.maxNumberOfThreads = 200
+
+# Maximum number of connections
+httpd.maxNumberOfConnections = 500
+
+# Min number of active threads 
+httpd.minThreads = 1
+
+# Low number of active threads 
+httpd.lowThreads = 8
+
+# Maximum number of active threads
+httpd.maxThreads = 10
+
+# Maximum number of worker queued (-1 for infinite)
+httpd.maxQueued = 0
+
+# Max Idle Time (0 for infinite)
+httpd.maxIoIdleTimeMs = 120000
+
+
+################### Hypervisor ####################
+# Hypervisor driver (xen, qemu, vbox, etc.)
+hypervisor.driver = qemu
+
+# Hypervisor transport method (tcp, tls, ssh)
+hypervisor.transport = tcp
+
+# Hypervisor port
+hypervisor.port = 16509
+
+# Migration method (live, nonsharedfull, nosharedincremental)
+hypervisor.migration.method = live
+
+# Migration convergence timeout (= sec)
+hypervisor.migration.timeout = 60
+
+################### Fault tolerance ###############
+# Comma separated list of zookeeper host:port pairs
+faultTolerance.zookeeper.hosts = <% @zookeeperHosts.each do |server| %> <%= server %>:2181, <% end %>
+
+# Sets the zookeeper session timeout
+faultTolerance.zookeeper.sessionTimeout = 20000
+
+# Heartbeat interval (= ms)
+faultTolerance.heartbeat.interval = 3000
+
+# Heartbeat timeout (= ms)
+faultTolerance.heartbeat.timeout = 10000
+
+#### images repository ###########
+
+imageRepository.address = <%= @zookeeperHosts.first %>
+imageRepository.port = 4000
+
+
+# How the image are stored on local controller
+# # Supported types 
+# # backing : master on shared storage, backing local.
+# # localBacking : master + slave on node.
+#
+imageRepository.manager.disks = backing
+
+imageRepository.manager.source = /tmp/snooze/images
+imageRepository.manager.destination = /tmp/images
+
+################## Database ####################
+# Database type (only in-memory supported for now)
+database.type = memory
+
+database.cassandra.hosts = <% @databaseCassandraHosts.each do |server| %> <%= server %>:9160, <% end %>
+
+# Maximum number of monitoring entries to keep per group manager
+database.numberOfEntriesPerGroupManager = 20
+
+# Maximum number of monitoring entries to keep per virtual machine
+database.numberOfEntriesPerVirtualMachine = 300
+
+################### Monitoring #################
+# Monitoring information probing interval (= ms)
+monitoring.interval = 3000
+
+# Monitoring timeout (= ms)
+monitoring.timeout = 20000
+
+# Number of monitoring entries to collect per virtual machine
+monitoring.numberOfMonitoringEntries = 10
+
+# The CPU, memory, and network utilization thresholds (MIN, MID, MAX) (= %)
+monitoring.thresholds.cpu = 0,1,1
+monitoring.thresholds.memory = 0,1,1
+monitoring.thresholds.network = 0,1,1
+
+# External monitoring
+external.notifier.transport = RABBITMQ
+external.notifier.address = <%= @externalNotificationHost %>
+external.notifier.port = 5672
+external.notifier.username = snooze
+external.notifier.password = snooze
+external.notifier.vhost = snooze-vhost
+external.notifier.faultTolerance.numberOfRetries = 10
+external.notifier.faultTolerance.retryInterval = 10
+
+
+################## Estimator ##################
+# Enables/disables static estimation (i.e. based on requested capacity only)
+estimator.static = true
+
+# The sort norm (L1, Euclid, Max)
+estimator.sortNorm = L1
+
+# The maximum number of monitoring data entries to consider in estimation
+estimator.numberOfMonitoringEntries = 15
+
+# The rsource demand estimation policies (only average for now)
+estimator.policy.cpu = average
+estimator.policy.memory = average
+estimator.policy.network = average
+
+################### Group leader scheduler ###################
+# Local controller assigned policy (RoundRobin, Random)
+groupLeaderScheduler.assignmentPolicy = RoundRobin
+
+# Virtual cluster dispatching policy (FirstFit, RoundRobin)
+groupLeaderScheduler.dispatchingPolicy = RoundRobin
+
+################## Group manager scheduler ###################
+# Plugins directory
+groupManagerScheduler.pluginsDirectory = /usr/share/snoozenode/plugins
+
+# Placement policy (FirstFit, RoundRobin, custom :from 2.0 )
+groupManagerScheduler.placementPolicy = RoundRobin
+
+# Overload relocation policy
+groupManagerScheduler.relocation.overloadPolicy = GreedyOverloadRelocation
+
+# Underload relocation policy
+groupManagerScheduler.relocation.underloadPolicy = GreedyUnderloadRelocation
+
+# Enable/disable periodic reconfiguration
+groupManagerScheduler.reconfiguration.enabled = false
+
+# Reconfiguration policy
+groupManagerScheduler.reconfiguration.policy = Sercon 
+
+# Reconfiguration interval (= cron expression)
+groupManagerScheduler.reconfiguration.interval = 0 0/1 *  * * ?
+
+################## Submission settings ####################
+# Number of retries and interval (= sec) for VM dispatching
+submission.dispatching.numberOfRetries = 60
+submission.dispatching.retryInterval = 5
+
+# Number of retries and interval (= sec) for VM submission results collection
+submission.collection.numberOfRetries = 200
+submission.collection.retryInterval = 10
+
+# The CPU, memory, and networking packing densities (= %)
+submission.packingDensity.cpu = 1
+submission.packingDensity.memory = 1
+submission.packingDensity.network = 1
+
+################### Energy management ####################
+# Enable / disable the energy saving features 
+energyManagement.enabled = false
+
+# The minimal amount of compute nodes (LCs) to keep on
+energyManagement.numberOfReservedNodes = 1
+
+# Power saving action to execute (shutdown, suspendToRam, suspendToDisk, suspendToBoth)
+energyManagement.powerSavingAction = suspendToRam
+
+# Shutdown driver (system, IPMI, test)
+energyManagement.drivers.shutdown = system
+
+# Suspend driver (pmutils, uswsusp)
+energyManagement.drivers.suspend = pmutils
+
+# Wakeup driver (IPMI, WOL, kapower3, test)
+energyManagement.drivers.wakeup = kapower3
+
+# Wakeup driver specific options 
+# For IPMI
+#energyManagement.drivers.wakeup.options = -I lanplus -H BMC_IP -U user -P password
+# For WOL
+# energyManagement.drivers.wakeup.options = MAC_ADDRESS
+# For kapower3
+energyManagement.drivers.wakeup.options = -m <%= @fqdn %>
+
+# The idle time threshold above which the specified power saving action is performed (= sec)
+energyManagement.thresholds.idleTime = 120
+
+# The wake up threshold specifies how long to wait until node is considered wokenup (= sec)
+energyManagement.thresholds.wakeupTime = 300
+
+# The power management command execution timeout (= sec)
+energyManagement.commandExecutionTimeout = 10
+
+################### Provisioner ########################
+# contextualization disk bus
+provisioner.contextDisk.bus = ide
+provisioner.contextDisk.dev = hdc
+provisioner.contextDisk.name = context.iso
+
+# bus for primary disk
+provisioner.disk.bus = virtio
+provisioner.disk.dev = vda
+
+# Enable a serial console fort the guest.
+provisioner.serial.enable = true
+
+# Enable a vcn console for the guest.
+provisioner.vnc.enable = false
+provisioner.vnc.listenAddress = 0.0.0.0
+provisioner.vnc.startPort = 8000
+provisioner.vnc.portRange = 1000
+provisioner.vnc.keymap = fr

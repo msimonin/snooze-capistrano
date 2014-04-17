@@ -2,20 +2,140 @@ set :snooze_path, "#{recipes_path}/snooze"
 set :snooze_puppet_path, "/home/#{g5k_user}/snooze-puppet"
 set :snooze_puppet_repo_url, "https://github.com/msimonin/snooze-puppet.git"
 set :snooze_experiments_repo_url, "https://github.com/snoozesoftware/snooze-experiments"
+
+set :snooze_deploy_localcluster_url, "https://github.com/snoozesoftware/snooze-deploy-localcluster"
+set :snooze_deploy_localcluster_local_path, "/tmp/snooze-deploy-localcluster"
+
 set :snooze_imagesrepository_local_path, "/tmp/snooze/images"
+set :wget, "https_proxy=http://proxy:3128 http_proxy=http://proxy:3128 wget"
+set :git, "https_proxy=http://proxy:3128 http_proxy=http://proxy:3128 git"
 
 load "#{snooze_path}/roles.rb"
 load "#{snooze_path}/output.rb"
 load "#{snooze_path}/config.rb"
 
+
+require 'yaml'
+
 namespace :snooze do
- 
+
+  namespace :custom do
+
+    task :default do
+      fix_locales
+      init
+      prepare
+      dispatch
+      start
+    end
+
+    # fix the locales (work around)
+    task :fix_locales, :roles => [:all] do
+      set :user, "root"
+      # enable fr locales
+      run 'sed -ie "s/^# *\(fr_FR.*\)/\1/g" /etc/locale.gen && locale-gen'
+    end
+
+    desc "Create custom topology file see #{recipes_path}/tmp/topology"
+    task :init do
+      topology = {}
+
+      groupmanagers = find_servers :roles => [:groupmanager]
+      groupmanagers.each do |groupmanager|
+        topology[groupmanager.host] = {
+          :bootstraps => "0",
+          :groupmanagers => "1", 
+          :localcontrollers => "0",
+        }
+      end
+
+      localcontrollers = find_servers :roles => [:localcontroller]
+      localcontrollers.each do |localcontroller|
+        topology[localcontroller.host] = {
+          :bootstraps => "0",
+          :localcontrollers => "1",
+          :groupmanagers => "0",
+        }
+      end
+      File.open("#{snooze_path}/tmp/topology.yml", 'w') {|f| f.write topology.to_yaml } #Store
+    end
+
+    task :prepare, :roles => [:groupmanager, :localcontroller] do
+      set :user, "root"
+      run "#{git} clone #{snooze_deploy_localcluster_url} #{snooze_deploy_localcluster_local_path}" 
+    end
+
+    task :dispatch do
+      set :user, "root"
+      servers = find_servers :roles => [:groupmanager, :localcontroller]
+      topology = YAML::load_file("#{snooze_path}/tmp/topology.yml") 
+      settings = "#{snooze_deploy_localcluster_local_path}/scripts/settings.sh"
+
+      mcast=10000
+      servers.each do |s|
+        # replace in scripts/settings.sh
+        gms = topology[s.host][:groupmanagers]
+        lcs = topology[s.host][:localcontrollers]
+
+        run "perl -pi -e 's,^number_of_group_managers.*,number_of_group_managers=#{gms},' #{settings}", :hosts => s
+        run "perl -pi -e 's,^number_of_local_controllers.*,number_of_local_controllers=#{lcs},' #{settings}", :hosts => s
+        run "perl -pi -e 's,^number_of_bootstrap_nodes.*,number_of_bootstrap_nodes=0,' #{settings}", :hosts => s, :user => "root"
+        run "perl -pi -e 's,^start_group_manager_heartbeat_mcast_port.*,start_group_manager_heartbeat_mcast_port=#{mcast},' #{settings}", :hosts => s
+        run "perl -pi -e 's,^snoozeimages_enable.*,snoozeimages_enable=false,' #{settings}", :hosts => s
+        run "perl -pi -e 's,^snoozeec2_enable.*,snoozeec2_enable=false,' #{settings}", :hosts => s
+        # increment the mcast port
+        mcast = mcast + gms.to_i + 1
+      end
+    end
+
+    desc 'Start the custom topology cluster'
+    task :start, :roles =>[:bootstrap, :groupmanager, :localcontroller] do
+      set :user, "root"
+      parallel do |session|
+        session.when "in?(:bootstrap)", "service snoozenode start; service snoozeimages start; service snoozeec2 start"
+        session.when "in?(:localcontroller)", "cd #{snooze_deploy_localcluster_local_path}; ./start_local_cluster.sh -l 1> log 2>&1 ; ./start_local_cluster.sh -s 1> log 2>&1"
+        session.when "in?(:groupmanager)", "cd #{snooze_deploy_localcluster_local_path}; ./start_local_cluster.sh -s 1> log 2>&1"
+      end
+    end
+
+    desc 'Stop the custom topology cluster'
+    task :stop, :roles => [:bootstrap, :groupmanager, :localcontroller] do
+      set :user, "root"
+        parallel do |session|
+          session.when "in?(:bootstrap)", "/etc/init.d/snoozenode stop ; /etc/init.d/snoozeimages stop; /etc/init.d/snoozeec2 stop; rm /tmp/snooze_*"
+          session.when "in?(:groupmanager)", "cd #{snooze_deploy_localcluster_local_path}; ./start_local_cluster.sh -k ; killall java; rm /tmp/snooze_* "
+          session.when "in?(:localcontroller)", "cd #{snooze_deploy_localcluster_local_path}; ./start_local_cluster.sh -k ; ./start_local_cluster.sh -d; killall java; rm /tmp/snooze_* "
+        end
+
+    end
+  end # namespace custom
+
   desc 'Install Snooze on nodes'
   task :default do
     prepare::default
     provision::default
+    plugins::default
     cluster::default
   end
+
+  namespace :plugins do
+    
+    desc 'install plugins'
+    task :default do
+      install
+    end
+
+    task :install, :roles=> [:all] do
+      set :user, "root"
+      # todo (remove it ? )
+      run "mkdir -p /usr/share/snoozenode/plugins"
+      $plugins.each do |plugin|
+        run "#{wget} #{plugin[:url]} -O #{plugin[:destination]}"
+      end 
+    end
+
+  end
+
 
   namespace :prepare do  
     desc 'prepare the nodes'
@@ -39,23 +159,24 @@ namespace :snooze do
       end
       run "https_proxy='http://proxy:3128' git clone #{snooze_puppet_repo_url} #{snooze_puppet_path}" 
 #      upload "/home/msimonin/github/snooze-puppet/", "#{snooze_puppet_path}", :via => :scp, :recursive => true
-      run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
-      run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
-      run "https_proxy='http://proxy:3128' wget #{snoozeimages_deb_url} -O #{snooze_puppet_path}/modules/snoozeimages/files/snoozeimages.deb 2>1"
-      run "https_proxy='http://proxy:3128' wget #{snoozeec2_deb_url} -O #{snooze_puppet_path}/modules/snoozeec2/files/snoozeec2.deb 2>1"
-      run "https_proxy='http://proxy:3128' wget #{kadeploy3_common_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-common.deb 2>1"
-      run "https_proxy='http://proxy:3128' wget #{kadeploy3_client_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-client.deb 2>1"
+      run "#{wget} #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
+      run "#{wget} #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
+      run "#{wget} #{snoozeimages_deb_url} -O #{snooze_puppet_path}/modules/snoozeimages/files/snoozeimages.deb 2>1"
+      run "#{wget} #{snoozeec2_deb_url} -O #{snooze_puppet_path}/modules/snoozeec2/files/snoozeec2.deb 2>1"
+      run "#{wget} #{kadeploy3_common_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-common.deb 2>1"
+      run "#{wget} #{kadeploy3_client_deb_url} -O #{snooze_puppet_path}/modules/kadeploy3/files/kadeploy-client.deb 2>1"
     end
 
     task :reprepare, :roles => [:frontend] do
       set :user, "#{g5k_user}"
-      run "https_proxy='http://proxy:3128' wget #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
-      run "https_proxy='http://proxy:3128' wget #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
+      run "#{wget} #{snoozenode_deb_url} -O #{snooze_puppet_path}/modules/snoozenode/files/snoozenode.deb 2>1"
+      run "#{wget} #{snoozeclient_deb_url} -O #{snooze_puppet_path}/modules/snoozeclient/files/snoozeclient.deb 2>1"
     end
 
     task :purge, :roles => [:all] do
       set :user, "root"
       run "dpkg --purge snoozenode 2>1"
+      run "rm -rf /opt/snoozenode"
       run "dpkg --purge snoozeimages 2>1"
       run "dpkg --purge snoozeclient 2>1"
     end
@@ -92,8 +213,9 @@ namespace :snooze do
     task :transfer, :roles => [:frontend] do
       set :user, "#{g5k_user}"
       upload("#{snooze_path}/tmp/bootstrap.pp","#{snooze_puppet_path}/manifests/bootstrap.pp")
-      upload("#{snooze_path}/tmp/groupmanager.pp","#{snooze_puppet_path}/manifests/groupmanager.pp", :via => :scp)
+      upload("#{snooze_path}/tmp/groupmanager.pp","#{snooze_puppet_path}/manifests/groupmanager.pp")
       upload("#{snooze_path}/tmp/localcontroller.pp","#{snooze_puppet_path}/manifests/localcontroller.pp")
+      upload("#{snooze_path}/templates/snooze_node.cfg.erb.#{version}", "#{snooze_puppet_path}/modules/snoozenode/templates/snooze_node.cfg.erb.#{version}")
     end
 
 
@@ -190,14 +312,14 @@ namespace :cluster do
 
       ls = capture("ls #{snooze_imagesrepository_local_path}/debian-hadoop-context-big.qcow2 &2>&1")
       if ls==""
-        run "https_proxy='http://proxy:3128' wget -O \
+        run "#{wget} -O \
         #{snooze_imagesrepository_local_path}/debian-hadoop-context-big.qcow2 \
         http://public.rennes.grid5000.fr/~msimonin/debian-hadoop-context-big.qcow2 2>1"
       end
 
       ls = capture("ls #{snooze_imagesrepository_local_path}/resilin-base.raw &2>&1")
       if ls==""
-        run "https_proxy='http://proxy:3128' wget -O \
+        run "#{wget} -O \
         #{snooze_imagesrepository_local_path}/resilin-base.raw \
         http://public.rennes.grid5000.fr/~msimonin/resilin-base.raw 2>1"
       end
@@ -269,7 +391,7 @@ namespace :cluster do
     set :user, "root"
       parallel do |session|
         session.when "in?(:bootstrap)", "/etc/init.d/snoozenode start ; /etc/init.d/snoozeimages start; /etc/init.d/snoozeec2 start"
-        session.when "in?(:localcontroller)", "/etc/init.d/snoozenode start"
+        session.when "in?(:localcontroller)", " service libvirt-bin restart ; /etc/init.d/snoozenode start"
         session.when "in?(:groupmanager)", "/etc/init.d/snoozenode start"
       end
   end

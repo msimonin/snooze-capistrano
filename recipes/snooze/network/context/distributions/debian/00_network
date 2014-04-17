@@ -85,5 +85,6 @@ EOF
 
 HOSTNAME=vm-$(echo $IPADDR | cut -d '.' -f 1-4)
 echo $HOSTNAME > /etc/hostname && hostname $HOSTNAME
-/etc/init.d/networking restart
+#/etc/init.d/networking restart
+service networking restart
 
